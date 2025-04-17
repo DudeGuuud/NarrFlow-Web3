@@ -21,6 +21,7 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
 - 智能合约：Move on Sui
 - Web3交互：sui-kit.js
 - 钱包连接：Sui Wallet
+- 存储解决方案：Walrus
 
 ### 2. 项目结构规划
 ```bash
@@ -170,6 +171,54 @@ Demo/
    - 集成测试前后端交互
    - 安全审计和性能优化
 
+## 2024-05-20 存储策略优化：采用Walrus解决方案
+
+### 完成内容
+1. 存储策略设计
+   - 评估多种存储方案（全链上、IPFS、Arweave）
+   - 确定使用Walrus作为最佳存储解决方案
+   - 设计内容存储与检索流程
+
+2. 数据模型优化
+   - 修改Paragraph结构，添加walrus_id字段
+   - 设计内容哈希验证机制
+   - 优化链上存储，减少gas消耗
+
+3. Walrus集成规划
+   - 研究Walrus Sites托管前端方案
+   - 设计内容上传到Walrus的API流程
+   - 规划SuiNS域名集成计划
+
+4. 文档更新
+   - 更新README.md和技术文档
+   - 创建详细的demonstrate.md演示文档
+   - 修订合约相关文档
+
+### 技术亮点
+1. 使用Sui生态原生存储方案，无需跨链操作
+2. Walrus提供高数据可用性，确保内容不会丢失
+3. 为每个故事/段落创建专属可访问页面
+4. 大幅降低链上存储成本，同时保持内容完整性验证
+5. 通过SuiNS实现人性化域名，简化用户访问
+
+### 特别优势
+1. **前端托管**：利用Walrus Sites部署前端，无需维护服务器
+2. **内容存储**：Walrus提供可靠的去中心化存储，优于普通IPFS
+3. **专属页面**：可创建形如narrflow.wal.app/[故事ID]的专属页面
+4. **原生集成**：与Sui智能合约完美融合，操作简便
+5. **用户体验**：提供接近传统Web应用的流畅体验
+
+### 下一步工作
+1. 实现Walrus SDK集成
+   - 添加内容上传到Walrus的功能
+   - 实现从Walrus检索内容的函数
+   - 开发内容哈希验证系统
+
+2. 部署与测试
+   - 使用site-builder部署前端到Walrus Sites
+   - 注册SuiNS域名(narrflow.wal.app)
+   - 测试完整内容流程
+
 ## 注意事项
 1. 所有组件必须包含动画效果
 2. 确保响应式设计
@@ -190,7 +239,10 @@ npm install react-router-dom
 # Web3 相关
 npm install @mysten/sui-kit @mysten/wallet-kit
 
+# Walrus 相关
+npm install walrus-site-builder
+
 # 开发工具
 npm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
 npm install -D prettier eslint-config-prettier eslint-plugin-prettier
-npm install -D husky lint-staged
+npm install -D husky lint-staged 

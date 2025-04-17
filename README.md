@@ -7,7 +7,8 @@ NarrFlow 是一个基于区块链技术的去中心化协作小说创作平台�
 - **协作创作**：多人参与故事创作，共同决定情节发展
 - **投票机制**：社区投票选出最佳段落提案，确保高质量内容
 - **代币奖励**：创作者和参与者可获得NARR代币奖励
-- **全链上存储**：故事内容完全存储在区块链上，永久保存
+- **全链上治理**：投票和决策完全透明，永久记录在区块链上
+- **Walrus存储**：故事内容安全存储在Sui生态的Walrus系统中
 - **移动友好**：响应式设计，支持多端访问
 - **多语言支持**：内置中英文界面切换
 
@@ -19,11 +20,13 @@ NarrFlow 是一个基于区块链技术的去中心化协作小说创作平台�
 - **动画**：Framer Motion、GSAP、React Spring
 - **状态管理**：Redux Toolkit
 - **构建工具**：Vite
+- **托管**：Walrus Sites
 
 ### 区块链技术
 - **智能合约**：Move on Sui
 - **Web3交互**：sui-kit.js
 - **钱包连接**：Sui Wallet
+- **内容存储**：Walrus
 
 ## 智能合约模块
 
@@ -44,14 +47,24 @@ NarrFlow 是一个基于区块链技术的去中心化协作小说创作平台�
    - 处理复合业务逻辑
    - 权限管理
 
+## 存储策略
+
+NarrFlow采用Walrus作为存储解决方案，具有以下优势：
+
+- **前端托管**：使用Walrus Sites部署前端应用，无需管理服务器
+- **内容存储**：故事和段落内容存储在Walrus中，确保持久性
+- **专属页面**：每个故事拥有专属URL（narrflow.wal.app/[故事ID]）
+- **SuiNS集成**：利用SuiNS提供人性化域名，无需传统DNS
+- **高数据可用性**：去中心化存储确保内容不会丢失
+
 ## 安装与使用
 
 ### 前端
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/narr-flow.git
-cd narr-flow
+git clone https://github.com/DudeGuuud/NarrFlow-Web3.git
+cd NarrFlow-Web3
 
 # 安装依赖
 npm install
@@ -61,6 +74,9 @@ npm run dev
 
 # 构建生产版本
 npm run build
+
+# 部署到Walrus Sites
+npx walrus-site-builder publish
 ```
 
 ### 智能合约
@@ -85,7 +101,7 @@ sui client publish --gas-budget 100000000
 - ✅ 国际化功能实现
 - ✅ 智能合约核心功能开发
 - ✅ 代币系统实现
-- 🔄 前后端集成 (进行中)
+- 🔄 Walrus存储集成 (进行中)
 - 🔄 用户体验优化 (进行中)
 - ⬜ 测试与部署 (计划中)
 
@@ -95,4 +111,4 @@ sui client publish --gas-budget 100000000
 
 ## 许可证
 
-本项目采用 [MIT 许可证](LICENSE)。
+本项目采用 [MIT 许可证](LICENSE)。 

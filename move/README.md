@@ -34,7 +34,32 @@ NarrFlow是一个去中心化的协作叙事平台，用户可以创建故事、
 - **平台管理**：提供平台级别的管理功能
 - **权限控制**：确保敏感操作只能由授权用户执行
 
-## 数据结构
+## 存储策略
+
+NarrFlow使用Walrus作为去中心化存储解决方案：
+
+1. **链上存储**：仅保存元数据和Walrus引用
+   - 故事和段落ID、作者信息、时间戳
+   - 投票数据和结果
+   - 指向Walrus内容的引用ID
+
+2. **Walrus存储**：存储实际内容
+   - 存储完整的故事文本和段落内容
+   - 利用Sui原生的Walrus系统确保数据持久性
+   - 通过内容哈希验证确保完整性
+
+3. **数据结构优化**：
+```move
+struct Paragraph {
+    walrus_id: vector<u8>,    // Walrus内容引用ID
+    content_hash: vector<u8>, // 内容验证哈希
+    preview: String,          // 内容简短预览
+    author: address,          // 作者地址
+    timestamp: u64            // 创建时间戳
+}
+```
+
+## 数据模型
 
 ### 故事结构
 ```
@@ -72,6 +97,7 @@ struct Treasury {
 ### 前提条件
 - Sui CLI 已安装
 - 对Move语言有基本了解
+- Walrus CLI工具（用于内容存储）
 
 ### 编译步骤
 ```bash
@@ -102,12 +128,13 @@ sui move test
 2. **余额验证** - 所有代币操作前都会验证余额
 3. **状态验证** - 函数调用前会验证系统状态的合法性
 4. **错误处理** - 详细的错误代码体系便于调试
+5. **内容验证** - 使用哈希验证确保从Walrus检索的内容完整性
 
 ## API参考
 
 ### 故事模块
 - `create_story(title, first_paragraph)` - 创建新故事
-- `add_paragraph(story, content)` - 向故事添加段落
+- `add_paragraph(story, walrus_id, content_hash, preview)` - 向故事添加段落
 - `start_voting(story, proposals, voting_duration)` - 开始投票会话
 - `cast_vote(story, proposal_index)` - 为提案投票
 - `complete_story(story)` - 结束投票并完成故事

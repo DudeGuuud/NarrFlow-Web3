@@ -6,7 +6,7 @@
 2. 产品架构
 3. 技术实现
 4. 智能合约设计
-5. 存储策略对比
+5. Walrus存储策略
 6. 代币经济
 7. 用户流程
 8. 未来发展
@@ -51,9 +51,9 @@ flowchart TB
         UI --> I18n[国际化]
     end
     
-    subgraph "后端服务"
-        API[API服务] --> IPFS[IPFS/Arweave]
-        API --> IndexDB[索引数据库]
+    subgraph "存储服务"
+        Walrus[Walrus Sites] --> WalrusPortal[Walrus门户]
+        Walrus --> WalrusStorage[Walrus存储]
     end
     
     subgraph "区块链层"
@@ -62,8 +62,8 @@ flowchart TB
     end
     
     DappKit <--> CM
-    API <--> IndexDB
-    CM --> IndexDB
+    UI <--> Walrus
+    CM --> WalrusStorage
 ```
 
 ### 技术栈
@@ -78,7 +78,8 @@ flowchart TB
 - Sui Wallet 集成
 
 **存储**
-- IPFS/Arweave (内容存储)
+- Walrus Sites (前端托管)
+- Walrus 存储 (内容存储)
 - Sui 链上存储 (状态和元数据)
 
 ---
@@ -111,15 +112,15 @@ sequenceDiagram
     participant 前端
     participant 钱包
     participant 智能合约
-    participant 存储服务
+    participant Walrus
     
     用户->>前端: 创建故事/提交段落
-    前端->>存储服务: 上传内容
-    存储服务-->>前端: 返回内容哈希
+    前端->>Walrus: 上传内容
+    Walrus-->>前端: 返回Walrus ID
     前端->>钱包: 请求签名交易
     钱包->>用户: 确认交易
     用户->>钱包: 批准
-    钱包->>智能合约: 提交交易
+    钱包->>智能合约: 提交交易(包含Walrus ID)
     智能合约-->>钱包: 返回结果
     钱包-->>前端: 更新状态
     前端-->>用户: 显示结果
@@ -174,7 +175,9 @@ classDiagram
     }
     
     class Paragraph {
-        +String/Hash content
+        +vector~u8~ walrus_id
+        +vector~u8~ content_hash
+        +String preview
         +address author
         +u64 timestamp
     }
@@ -199,91 +202,98 @@ classDiagram
 
 ---
 
-## 5. 存储策略对比
+## 5. Walrus存储策略
 
-### 方案比较
-
-| 特性 | 链上存储全文 | 链上存储哈希 |
-|------|--------------|--------------|
-| Gas成本 | 高 | 低 |
-| 去中心化程度 | 完全去中心化 | 部分去中心化 |
-| 内容大小限制 | 严格受限 | 几乎无限制 |
-| 读取性能 | 较慢 | 较快 |
-| 实现复杂度 | 简单 | 中等 |
-| 多媒体支持 | 困难 | 容易 |
-| 长期存储风险 | 低 | 中等 |
-
-### 链上全文存储
+### Walrus技术特点
 
 ```mermaid
-graph LR
-    A[用户] --> B[创建内容]
-    B --> C[交易提交]
-    C --> D[区块链存储]
-    D --> E[前端读取]
-    E --> F[显示内容]
+graph TD
+    A[Walrus技术] --> B[Sui原生存储]
+    A --> C[高数据可用性]
+    A --> D[去中心化托管]
+    A --> E[内容寻址]
+    A --> F[适配Sui生态]
+    
+    B --> G[无需外部依赖]
+    C --> H[内容持久性]
+    D --> I[SuiNS集成]
+    E --> J[高效内容检索]
+    F --> K[智能合约交互]
 ```
 
-**优点**：
-- 完全去中心化，无需外部依赖
-- 内容永久存储在链上
-- 简单直接的实现方式
+### Walrus Sites集成
 
-**缺点**：
-- 极高的Gas成本
-- 内容长度严格受限
-- 链上空间浪费
-- 不适合多媒体内容
+**优势**:
+- 前端托管在Walrus Sites上，无需管理服务器
+- 通过site-builder工具简化部署流程
+- 为每个故事生成专属URL: narrflow.wal.app/[故事ID]
+- 利用SuiNS系统实现人性化命名
+- 内容存储由多节点分布式保障
 
-### 链上哈希存储
+### 内容存储流程
 
 ```mermaid
 graph TB
-    subgraph "链下流程"
-        A[创建内容] --> B[IPFS/Arweave存储]
-        B --> C[获取内容哈希]
+    subgraph "内容创建流程"
+        A[用户创建内容] --> B[前端计算内容哈希]
+        B --> C[上传到Walrus存储]
+        C --> D[获取Walrus ID]
+        D --> E[提交交易到Sui链]
     end
     
-    subgraph "链上流程"
-        C --> D[提交哈希到链上]
-        D --> E[智能合约记录]
+    subgraph "链上存储内容"
+        E --> F[故事元数据]
+        E --> G[内容哈希]
+        E --> H[Walrus ID]
+        E --> I[创作者信息]
+        E --> J[投票数据]
     end
     
-    subgraph "读取流程"
-        E --> F[获取内容哈希]
-        F --> G[从IPFS/Arweave读取]
-        G --> H[验证哈希匹配]
-        H --> I[显示内容]
+    subgraph "内容获取流程"
+        K[用户请求内容] --> L[获取链上元数据]
+        L --> M[通过Walrus ID获取内容]
+        M --> N[验证内容哈希]
+        N --> O[显示内容]
     end
 ```
 
-**优点**：
-- 大幅降低Gas成本 (减少85-95%)
-- 内容大小无限制
-- 支持多媒体（图片、音频等）
-- 更好的读取性能
+### 代码实现
 
-**缺点**：
-- 依赖外部存储系统
-- 架构复杂度增加
-- 需确保外部存储的持久性
-- 完整内容验证需额外步骤
+```move
+struct Paragraph has store {
+    walrus_id: vector<u8>,    // Walrus上内容的唯一标识符
+    content_hash: vector<u8>, // 内容哈希，用于验证
+    preview: String,          // 短预览（约50字节）
+    author: address,
+    timestamp: u64
+}
 
-### 成本对比实例
+// 添加段落函数
+public fun add_paragraph(
+    story: &mut Story, 
+    walrus_id: vector<u8>,
+    content_hash: vector<u8>,
+    preview: String,
+    ctx: &mut TxContext
+) {
+    let paragraph = Paragraph {
+        walrus_id,
+        content_hash,
+        preview,
+        author: tx_context::sender(ctx),
+        timestamp: tx_context::epoch(ctx)
+    };
+    vector::push_back(&mut story.paragraphs, paragraph);
+}
+```
 
-假设一个标准段落为500字节：
+### 为何选择Walrus
 
-**全文存储**：
-- 每个段落约500字节
-- 10个段落 = 5000字节
-- Gas成本: ~0.05-0.1 SUI/段落
-
-**哈希存储**：
-- 每个哈希约32字节
-- 10个段落 = 320字节
-- Gas成本: ~0.003-0.008 SUI/段落
-
-**成本节省**：约87-94%
+1. **原生集成**: 作为Sui生态的存储解决方案，与智能合约无缝对接
+2. **高可用性**: 去中心化存储保证内容不会丢失
+3. **前端托管**: Walrus Sites简化了项目部署流程
+4. **用户体验**: 读取和显示内容速度更快，支持专属页面
+5. **链生态**: 完全在Sui生态内运行，不依赖外部系统
 
 ---
 
@@ -363,13 +373,13 @@ timeline
         前端基础框架 : 用户界面和钱包集成
         基础功能测试 : 创作和投票机制
     section 阶段2
-        实现混合存储方案 : IPFS集成
+        实现Walrus存储方案 : 前端和内容托管
+        注册SuiNS域名 : narrflow.wal.app
         完善代币经济 : 完善奖励机制
-        社区治理 : DAO投票系统
     section 阶段3
         多媒体支持 : 图片和音频集成
         NFT功能 : 故事NFT化
-        跨链桥接 : 多链互操作
+        社区治理 : DAO投票系统
     section 阶段4
         生态系统拓展 : 第三方应用集成
         AI辅助创作 : 智能推荐和辅助
@@ -378,128 +388,76 @@ timeline
 
 ### 存储策略演进计划
 
-**短期**：实施混合存储方案
-- 内容存储在IPFS/Arweave
-- 链上存储元数据和哈希
+**短期**：部署基础Walrus存储
+- 前端部署到Walrus Sites
+- 段落内容存储在Walrus
 
-**中期**：优化存储机制
-- 实现Sui原生对象感知存储
-- 建立去中心化缓存层
+**中期**：强化Walrus集成
+- 为每个故事创建专属Walrus Site页面
+- 实现动态内容展示
 
-**长期**：构建专用存储解决方案
-- 开发NarrFlow专用存储协议
-- 提供针对叙事内容的优化存储
-
----
-
-## 对比分析：链上存储策略
-
-### 详细技术对比
-
-| 特性 | 全链上存储 | 混合存储（链上哈希） |
-|------|------------|----------------------|
-| **技术实现** | 直接使用Move字符串类型 | 结合IPFS/Arweave和链上哈希 |
-| **数据大小** | 严格限制（通常<10KB） | 几乎无限制 | 
-| **Gas成本** | 非常高，线性增长 | 大幅降低，仅存储哈希值 |
-| **查询效率** | 适中（单一查询） | 更高（分布式内容检索） |
-| **扩展性** | 有限，受链容量限制 | 高度可扩展 |
-| **多媒体支持** | 几乎不可能 | 完全支持 |
-| **实现复杂度** | 低 | 中 |
-| **分叉风险** | 可能因数据大小触发分叉风险 | 极低分叉风险 |
-| **外部依赖** | 无 | 依赖IPFS/Arweave |
-| **去中心化程度** | 完全去中心化 | 依赖外部存储的去中心化程度 |
-
-### 代码实现对比
-
-**全链上存储实现**：
-
-```move
-struct Paragraph has store {
-    content: String, // 直接存储全文
-    author: address,
-    timestamp: u64
-}
-
-// 添加段落函数
-public fun add_paragraph(
-    story: &mut Story, 
-    content: String,
-    ctx: &mut TxContext
-) {
-    let paragraph = Paragraph {
-        content,  // 直接存储，占用大量链上空间
-        author: tx_context::sender(ctx),
-        timestamp: tx_context::epoch(ctx)
-    };
-    vector::push_back(&mut story.paragraphs, paragraph);
-}
-```
-
-**混合存储实现**：
-
-```move
-struct Paragraph has store {
-    content_hash: vector<u8>, // 仅存储内容哈希（32字节）
-    content_uri: String,      // IPFS/Arweave URI
-    content_preview: String,  // 短预览（约50字节）
-    author: address,
-    timestamp: u64
-}
-
-// 添加段落函数
-public fun add_paragraph(
-    story: &mut Story, 
-    content_hash: vector<u8>,
-    content_uri: String,
-    content_preview: String,
-    ctx: &mut TxContext
-) {
-    let paragraph = Paragraph {
-        content_hash,  // 仅存储哈希，大幅节省空间
-        content_uri,
-        content_preview,
-        author: tx_context::sender(ctx),
-        timestamp: tx_context::epoch(ctx)
-    };
-    vector::push_back(&mut story.paragraphs, paragraph);
-}
-```
-
-### 推荐：优化的混合存储模型
-
-```mermaid
-graph TD
-    subgraph "内容创建流程"
-        A[用户创建内容] --> B[前端计算内容哈希]
-        B --> C[上传到IPFS/Arweave]
-        C --> D[获取内容URI]
-        D --> E[提交交易到Sui链]
-    end
-    
-    subgraph "链上存储内容"
-        E --> F[故事元数据]
-        E --> G[内容哈希]
-        E --> H[URI引用]
-        E --> I[创作者信息]
-        E --> J[投票数据]
-    end
-    
-    subgraph "内容获取流程"
-        K[用户请求内容] --> L[获取链上元数据]
-        L --> M[通过URI获取内容]
-        M --> N[验证内容哈希]
-        N --> O[缓存并显示]
-    end
-```
-
-这种混合模型为NarrFlow项目提供了最佳的平衡：
-
-1. **成本效益**：显著降低gas成本，使创作更加经济
-2. **内容自由**：不受链上存储限制，支持丰富内容
-3. **可验证性**：通过哈希保证内容完整性
-4. **用户体验**：快速内容加载与显示
-5. **技术可行性**：利用现有成熟技术实现
+**长期**：高级Walrus功能
+- 开发自定义Walrus门户
+- 建立NarrFlow专用存储协议
 
 ---
 
-总结：混合存储模型代表了NarrFlow项目的最佳存储策略，既保持了区块链的核心价值（去中心化、透明、不可篡改），又解决了链上存储的局限性，为创作者提供更经济、更灵活的叙事平台。
+## 开发者看法与实现逻辑
+
+### 技术选择理由
+
+1. **为何选择Sui生态系统**：
+   - Move语言的安全性和资源导向设计非常适合管理数字资产
+   - Sui的高吞吐量和低交易费用适合频繁交互的叙事平台
+   - 丰富的生态系统工具，如Walrus和SuiNS，提供完整解决方案
+
+2. **为何选择Walrus而非其他存储**：
+   - 原生Sui集成，无需跨链操作
+   - Walrus Sites提供无服务器前端托管
+   - 高数据可用性保证，解决内容持久性问题
+   - 可以实现为每个故事/段落创建专属可访问页面
+
+3. **模块化设计逻辑**：
+   - 故事模块专注于叙事内容和投票逻辑
+   - 代币模块管理激励系统
+   - 核心模块整合功能，提供简化的用户体验
+
+### 实现挑战与解决方案
+
+1. **内容管理**：
+   - 挑战：平衡链上存储成本与内容完整性
+   - 解决方案：链上仅存储Walrus ID和内容哈希，实现高效验证
+
+2. **投票机制**：
+   - 挑战：确保投票公平性和激励参与
+   - 解决方案：链上投票结合代币奖励，创建正反馈循环
+
+3. **用户体验**：
+   - 挑战：简化区块链交互复杂性
+   - 解决方案：Walrus Sites提供类似传统Web应用的体验
+
+### 部署建议
+
+1. 首先部署故事和代币智能合约
+2. 使用site-builder将前端部署到Walrus Sites
+3. 注册SuiNS域名(narrflow.wal.app)
+4. 实现段落内容上传到Walrus的功能
+5. 开发专属故事页面的路由和渲染逻辑
+
+### 系统安全考量
+
+1. **内容验证**：
+   - 使用哈希验证确保内容完整性
+   - Walrus多节点存储保障数据安全
+
+2. **权限控制**：
+   - 故事作者拥有特定控制权限
+   - 使用Sui的所有权模型管理资源
+
+3. **审计**：
+   - 所有操作产生链上事件便于追踪
+   - 投票过程完全透明
+
+---
+
+总结：Walrus存储解决方案为NarrFlow提供了理想的技术基础，既保持了区块链的核心价值（去中心化、透明、不可篡改），又解决了内容存储的挑战。通过Walrus Sites，我们可以为用户提供无缝体验，同时确保内容的持久可访问性。 
