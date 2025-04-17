@@ -69,7 +69,9 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
        }
        
        struct Paragraph has store {
-           content: String,
+           walrus_id: vector<u8>,      // Walrus存储ID
+           content_hash: vector<u8>,    // 内容哈希值
+           preview: String,             // 内容预览
            author: address,
            vote_count: u64
        }
@@ -97,13 +99,15 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
    - 使用Sui的并行执行特性优化交易处理
    - 实现批量操作以减少Gas消耗
    - 利用Object-Centric存储模型优化数据访问
+   - 使用Walrus存储大容量内容降低链上存储成本
 
 ### 前端技术栈
 1. 框架选择
    - 主框架：React 18
    - 状态管理：Redux Toolkit
-   - UI组件库：Ant Design
+   - UI组件库：自定义组件 + TailwindCSS
    - Web3集成：sui-kit.js
+   - 托管平台：Walrus Sites
 
 2. 项目结构
    ```
@@ -118,18 +122,21 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
    │   └── Vote/
    ├── hooks/
    │   ├── useSui.ts
+   │   ├── useWalrus.ts
    │   └── useVote.ts
    ├── store/
    │   └── index.ts
    └── services/
+       ├── walrus.ts
        └── api.ts
    ```
 
 3. 关键功能实现
    - 使用React Hooks封装Sui Move合约调用
    - 实现实时投票状态更新
-   - 集成IPFS存储长文本内容
+   - 集成Walrus存储长文本内容
    - 实现富文本编辑器
+   - 利用SuiNS实现友好的URL访问
 
 4. 性能优化
    - 使用React.memo优化组件重渲染
@@ -140,44 +147,51 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
 1. 链上接口
    ```typescript
    interface StoryContract {
-     createStory(title: string): Promise<string>;
-     submitParagraph(storyId: string, content: string): Promise<void>;
+     createStory(title: string, walrusId: string, contentHash: string): Promise<string>;
+     submitParagraph(storyId: string, walrusId: string, contentHash: string, preview: string): Promise<void>;
      vote(storyId: string, paragraphId: string): Promise<void>;
      getStoryDetails(storyId: string): Promise<StoryDetails>;
    }
    ```
 
-2. 链下服务
-   - 使用Node.js + Express构建中间层
-   - MongoDB存储链下数据
-   - Redis缓存热点数据
+2. Walrus接口
+   ```typescript
+   interface WalrusService {
+     uploadContent(content: string): Promise<{walrusId: string, contentHash: string}>;
+     getContent(walrusId: string): Promise<string>;
+     verifyContent(walrusId: string, contentHash: string): Promise<boolean>;
+   }
+   ```
 
 ### 存储方案
 1. 链上存储
    - 故事元数据
    - 投票记录
    - 用户权限数据
+   - 内容哈希和Walrus ID
 
-2. IPFS存储
-   - 段落内容
+2. Walrus存储
+   - 段落详细内容
    - 完整故事文本
-   - 用户资料
+   - 用户头像和资料
+   - 前端应用托管
 
-3. 传统数据库
-   - 用户会话信息
-   - 临时草稿
-   - 统计数据
+3. 混合存储优势
+   - 减少85-95%的链上存储成本
+   - 确保内容永久可访问性
+   - 支持大量文本和媒体内容
+   - 内容验证通过哈希确保完整性
 
 ### 部署架构
 1. 前端部署
-   - 使用Vercel托管静态资源
-   - CloudFlare CDN加速
-   - Docker容器化部署
+   - 使用Walrus Sites托管前端应用
+   - 注册SuiNS域名（narrflow.wal.app）
+   - 为每个故事创建专属URL
 
-2. 后端服务
-   - 使用AWS Lambda无服务器架构
-   - API Gateway管理接口
-   - ElastiCache缓存层
+2. 内容服务
+   - 利用Walrus高可用性分布式存储
+   - 多节点数据备份确保内容安全
+   - 内容哈希验证确保完整性
 
 ### 开发工具链
 1. 开发环境
@@ -185,6 +199,7 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
    - Node.js 18+
    - TypeScript 5.0+
    - Vite构建工具
+   - Walrus site-builder
 
 2. 测试框架
    - Jest单元测试
@@ -193,7 +208,7 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
 
 3. CI/CD
    - GitHub Actions
-   - Docker自动构建
+   - 自动部署到Walrus Sites
    - 自动化测试和部署
 
 ## 改进建议
@@ -222,42 +237,80 @@ NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，
 
 ### 技术优化建议
 1. 存储优化
-   - 采用链上存证+链下存储的混合方案
-   - 实现IPFS分布式存储
+   - 采用链上元数据+Walrus内容存储的混合方案
+   - 实现内容哈希验证机制
    - 优化Gas费用
+   - 使用Walrus Sites的专属页面功能
 
 2. 性能提升
    - 实现批量投票处理
    - 优化智能合约调用
-   - 引入Layer2扩展方案
+   - 预加载热门内容提升访问速度
 
 ### 用户体验提升
 1. 创作体验
    - 提供富文本编辑器
    - 支持多语言创作
    - 添加写作辅助工具
+   - 实现实时内容预览
 
 2. 社交功能
    - 作者关注机制
    - 评论和打赏系统
    - 创作者社区
+   - 为每个作者提供专属页面
 
 ## 发展路线图
 
-### 第一阶段：MVP
+### 第一阶段：MVP (已完成)
 - 完成基础智能合约开发
 - 实现核心创作和投票功能
 - 发布测试网络版本
 
-### 第二阶段：功能完善
-- 优化经济模型
-- 添加社区治理功能
-- 提升用户体验
+### 第二阶段：Walrus集成 (进行中)
+- 整合Walrus存储解决方案
+- 实现内容哈希验证机制
+- 部署前端到Walrus Sites
+- 注册SuiNS域名
 
-### 第三阶段：生态扩展
-- 多链部署支持
-- 引入NFT功能
-- 建立创作者市场
+### 第三阶段：功能扩展
+- 添加多媒体内容支持
+- 实现NFT集成
+- 完善社区治理功能
+- 优化移动端体验
+
+### 第四阶段：生态建设
+- 开放API接口
+- 推出创作者激励计划
+- 建立社区治理DAO
+- 引入AI辅助创作功能
+
+## 技术特点
+
+### Walrus优势分析
+1. **原生集成**: 作为Sui生态的存储解决方案，与智能合约无缝对接
+2. **高可用性**: 去中心化存储保证内容不会丢失
+3. **前端托管**: Walrus Sites简化了项目部署流程
+4. **用户体验**: 读取和显示内容速度更快，支持专属页面
+5. **链生态**: 完全在Sui生态内运行，不依赖外部系统
+
+### 存储流程设计
+```mermaid
+graph TD
+    A[用户创建内容] --> B[前端计算内容哈希]
+    B --> C[上传到Walrus存储]
+    C --> D[获取Walrus ID]
+    D --> E[提交交易到Sui链]
+    E --> F[链上记录元数据和引用]
+    
+    G[用户访问内容] --> H[获取链上元数据]
+    H --> I[通过Walrus ID获取内容]
+    I --> J[验证内容哈希]
+    J --> K[显示内容]
+```
+
+### 总体评估
+Walrus存储解决方案为NarrFlow项目提供了理想的技术基础，既确保了内容的去中心化存储和永久可访问性，又大幅降低了链上存储成本，是项目技术架构的最佳选择。
 
 ## 风险控制
 
