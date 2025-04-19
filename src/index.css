@@ -207,3 +207,52 @@
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* 完全透明化 Suiet Wallet Kit 连接后容器，只保留文字 */
+.wkit-connected-container {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  min-height: unset !important;
+  display: flex !important;
+  align-items: center !important;
+  border: none !important;
+}
+
+.wkit-connected-container .wkit-account-address {
+  color: #1d4ed8 !important;
+  font-weight: bold;
+  font-size: 1rem;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.wkit-connected-container .wkit-chain-tag {
+  background: none !important;
+  color: #64748b !important;
+  border-radius: 0 !important;
+  font-size: 0.8rem;
+  padding: 0 4px !important;
+  margin-left: 6px;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.wkit-connected-container .wkit-account-avatar {
+  display: none !important;
+}
+
+.wkit-connected-container button,
+.wkit-connected-container .wkit-account-dropdown {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: unset !important;
+  min-height: unset !important;
+}

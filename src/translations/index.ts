@@ -32,6 +32,7 @@ export const translations: { [key: string]: TranslationType } = {
     btn_prev_page: '← Previous',
     btn_next_page: 'Next →',
     btn_submit: 'Submit',
+    btn_connect_wallet: 'CONNECT WALLET',
     
     // 创作表单
     form_title: 'Add your creation',
@@ -59,7 +60,7 @@ export const translations: { [key: string]: TranslationType } = {
     nav_create: '创建故事',
     nav_browse: '浏览故事',
     nav_profile: '个人资料',
-    
+    nav_connect_wallet: '连接钱包',
     // 书本组件
     book_title: '当前协作故事',
     book_authors: '由 %count% 位作者共同创作',
@@ -70,6 +71,7 @@ export const translations: { [key: string]: TranslationType } = {
     btn_prev_page: '← 上一页',
     btn_next_page: '下一页 →',
     btn_submit: '提交',
+    btn_connect_wallet: '连接钱包',
     
     // 创作表单
     form_title: '添加你的创意',

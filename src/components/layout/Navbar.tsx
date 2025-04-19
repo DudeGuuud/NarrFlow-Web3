@@ -4,6 +4,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLang } from '../../contexts/lang/LangContext';
 import { isMobileDevice } from '../../utils/deviceUtils';
 import { Globe, Sun, Moon, Menu, X, Check } from 'lucide-react';
+import { ConnectButton, useWallet, addressEllipsis } from '@suiet/wallet-kit';
+import '@suiet/wallet-kit/style.css';
 
 // 导航链接配置
 const LINKS = [
@@ -42,6 +44,7 @@ const Navbar: React.FC = () => {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
+  const wallet = useWallet();
 
   // 检测设备类型
   useEffect(() => {
@@ -114,10 +117,20 @@ const Navbar: React.FC = () => {
             ))}
           </ul>
         </nav>
-
-        {/* Right Side Actions */}
+        {/* Right Side Actions - 钱包连接按钮和钱包信息 */}
         <div className="flex-1 flex justify-end items-center space-x-3">
-          {/* Language Selector */}
+          <div className="flex items-center space-x-2">
+            <ConnectButton label={t('btn_connect_wallet')} />
+            {wallet?.account && (
+              <div className="flex flex-col items-end text-xs text-gray-700 dark:text-gray-300">
+                <span>{addressEllipsis(wallet.account.address)}</span>
+                <span className="text-[10px] text-primary-500 dark:text-primary-300">
+                  {wallet.chain?.name || 'Unknown Network'}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* 语言切换 */}
           <div className="relative" ref={langMenuRef}>
             <button
               onClick={(e) => {
@@ -132,7 +145,6 @@ const Navbar: React.FC = () => {
               <Globe className="w-4 h-4 mr-1" />
               <span>{lang === 'en' ? 'EN' : '中文'}</span>
             </button>
-            
             {langMenuOpen && (
               <div 
                 className="absolute top-full right-0 w-24 py-1 mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700 menu-transition open animate-slideDown"
@@ -160,8 +172,7 @@ const Navbar: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Theme Toggle Button */}
+          {/* 主题切换 */}
           <button
             onClick={toggleTheme}
             className="rounded-md p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -169,45 +180,10 @@ const Navbar: React.FC = () => {
           >
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden rounded-md p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-label={mobileMenuOpen ? '关闭菜单' : '打开菜单'}
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
         </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div 
-        className={`md:hidden ${mobileMenuOpen ? 'menu-transition open' : 'menu-transition'}`}
-        aria-hidden={!mobileMenuOpen}
-      >
-        <nav className="container py-2">
-          <ul className="flex flex-col space-y-2">
-            {LINKS.map((link) => (
-              <li key={link.to}>
-                <NavLink
-                  to={link.to}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) => isActive 
-                    ? `block py-1 text-sm font-medium ${theme === 'dark' ? 'text-primary-300' : 'text-primary-600'} nav-link`
-                    : `block py-1 text-sm ${theme === 'dark' ? 'text-gray-300 hover:text-primary-300' : 'text-gray-600 hover:text-primary-600'} nav-link`
-                  }
-                >
-                  {t(`nav_${link.label}`)}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </div>
     </header>
   );
 };
 
-export default Navbar; 
+export default Navbar;

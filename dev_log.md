@@ -246,3 +246,87 @@ npm install walrus-site-builder
 npm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
 npm install -D prettier eslint-config-prettier eslint-plugin-prettier
 npm install -D husky lint-staged 
+
+## 2025-04-18 NarrFlow后端开发与Walrus主网托管实施计划
+
+### 一、后端（链上）逻辑开发计划
+
+1. 智能合约结构与分工
+   - story.move：负责故事的创建、段落管理、投票机制、事件通知。
+   - token.move：负责NARR代币的发行、奖励分发、财库管理、权限控制。
+   - narr_flow.move：作为业务聚合层，负责跨模块复合逻辑、平台管理、权限校验。
+
+2. 合约开发与测试
+   - 开发原则：模块化、权限最小化、事件驱动、错误码详尽、类型安全。
+   - 流程：
+     1. 以move/README.md为蓝本，逐步实现/完善每个模块的核心功能。
+     2. 链上只存元数据和Walrus引用，内容本体全部走Walrus存储，降低Gas。
+     3. 每个合约函数都要有单元测试（sui move test），并覆盖边界和异常场景。
+     4. 事件系统完善，便于前端监听链上变更。
+     5. 权限与安全：敏感操作需严格校验调用者身份，防止越权和滥用。
+   - 合约部署：
+     - 使用最新Sui CLI，主网部署前务必在测试网全流程验证。
+     - 部署流程：sui move build → sui move test → sui client publish --gas-budget 100000000
+     - 记录合约包ID、模块ID，供前端和Walrus集成使用。
+
+### 二、前后端与Walrus存储集成
+
+1. 内容存储与链上引用
+   - 内容上传：前端将段落/故事内容上传到Walrus，获得walrus_id和content_hash。
+   - 链上引用：合约仅存储walrus_id、content_hash、作者、时间戳等元数据。
+   - 内容校验：前端展示内容时，需用content_hash校验Walrus返回内容的完整性。
+
+2. 前端与合约交互
+   - 使用sui-kit.js或@suiet/wallet-kit等最新Sui官方SDK，配合钱包实现链上交互。
+   - 通过React Hooks封装合约调用，保证代码复用和类型安全。
+   - 事件监听：前端订阅合约事件，实时刷新故事、投票、奖励等状态。
+
+3. Walrus存储与前端托管
+   - 内容存储：通过Walrus SDK或API上传内容，获取ID和哈希。
+   - 前端托管：使用walrus-site-builder（最新主网版）将前端静态资源一键部署到Walrus Sites。
+   - SuiNS集成：为每个故事/站点分配人性化域名（如 narrflow.wal.app/xxx）。
+   - 高可用性：内容多节点分布式存储，确保数据不丢失。
+
+### 三、CI/CD与自动化部署
+
+- CI/CD工具链：推荐用GitHub Actions或GitLab CI，集成walrus-site-builder和合约自动测试/部署脚本。
+- 自动化流程：
+  1. 代码push后自动运行前端构建、合约测试。
+  2. 前端产物自动上传Walrus Sites，合约自动部署到Sui测试网/主网。
+  3. 自动化校验合约事件、前端与链上数据一致性。
+
+### 四、Walrus Sites主网托管流程（最新）
+
+1. 准备工作：
+   - 安装最新版walrus-site-builder和walrus-cli。
+   - 确保有主网$WAL和$SUI代币。
+2. 前端构建：
+   - npm run build 生成静态资源。
+3. 发布到Walrus Sites：
+   - npx walrus-site-builder publish 或 walrus site publish，按官方文档操作。
+   - 获取网站Object ID。
+4. 绑定SuiNS域名（可选）：
+   - 访问 http://suins.io，将Object ID绑定到自定义域名。
+5. 内容上传与链上引用：
+   - 前端内容上传到Walrus，链上只存引用。
+6. 主网访问与推广：
+   - 通过 http://wal.app 或自定义SuiNS域名访问。
+   - 可将站点加入 Walrus Scan 目录，提升曝光。
+
+### 五、技术选型与可行性保障
+
+- Move合约：采用Sui主网最新Move标准，兼容性强，安全性高。
+- 前端：React 18+、TypeScript 5+、TailwindCSS、@suiet/wallet-kit、@mysten/sui等最新生态组件。
+- 存储与托管：Walrus Sites主网+Walrus内容存储，官方推荐方案，安全高可用。
+- CI/CD：主流自动化工具，支持一键部署和回滚。
+- 安全与合规：合约权限、内容校验、事件追踪、数据完整性验证全流程保障。
+
+### 六、后续优化与生态拓展
+
+- 持续关注Walrus和Sui生态的最新升级，及时适配新特性。
+- 逐步引入AI写作辅助、NFT集成、DAO治理等创新功能。
+- 推动社区共建，吸引更多创作者和开发者参与NarrFlow生态。
+
+---
+
+本实施计划结合NarrFlow业务需求、Sui+Walrus最新技术生态、Web3开发最佳实践，可行性高、扩展性强、安全合规。后续可根据主网进展和社区反馈持续优化细节，确保NarrFlow成为Web3协作叙事领域的标杆项目。 
