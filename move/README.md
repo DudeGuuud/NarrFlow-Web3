@@ -148,4 +148,54 @@ sui move test
 
 ## 许可证
 
-本项目采用MIT许可证。详见LICENSE文件。 
+本项目采用MIT许可证。详见LICENSE文件。
+
+## 本地编译、部署与交互（基于Sui官方文档）
+
+### 1. 本地编译与单元测试
+```bash
+cd move
+sui move build
+sui move test
+```
+
+### 2. 本地发布合约（假设已配置好sui钱包和本地节点）
+```bash
+sui client publish --gas-budget 100000000
+```
+发布后会输出packageId，后续交互需用到。
+
+### 3. 使用sui client call与合约交互
+以调用story.move的create_story为例：
+```bash
+sui client call \
+  --package <packageId> \
+  --module story \
+  --function create_story \
+  --args '"故事标题"' '"<64位内容哈希>"' '"<walrus_id>"' \
+  --gas-budget 100000000
+```
+参数说明：
+- <packageId>：发布合约后获得的包ID
+- <64位内容哈希>：前端生成的内容哈希
+- <walrus_id>：内容在Walrus存储的ID
+
+### 4. 推荐交互脚本结构
+可在项目根目录新建`scripts/interaction.sh`，批量执行常用交互命令。例如：
+```bash
+#!/bin/bash
+PACKAGE_ID=xxxx # 替换为实际packageId
+sui client call \
+  --package $PACKAGE_ID \
+  --module story \
+  --function create_story \
+  --args '"测试标题"' '"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"' '"walrus_123456"' \
+  --gas-budget 100000000
+```
+记得赋予脚本可执行权限：
+```bash
+chmod +x scripts/interaction.sh
+```
+
+---
+如需更多复杂交互，可参考[Sui官方CLI文档](https://docs.sui.io/build/cli-client)和Move合约参数类型说明。 
