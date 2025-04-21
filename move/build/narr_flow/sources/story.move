@@ -59,6 +59,8 @@ module narr_flow::story {
         content: string::String,
         author: address
     ) {
+        // 限制内容最大字符数（2000字符）
+        assert!(string::length(&content) <= 2000, 110); // 超出2000字符报错
         let idx = story_book.current_book_index;
         let book_ref = vector::borrow_mut(&mut story_book.books, idx);
         assert!(book_ref.status == 0, 100); // 只能给进行中的书添加段落
