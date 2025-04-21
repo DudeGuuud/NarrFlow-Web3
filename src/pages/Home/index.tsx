@@ -6,6 +6,7 @@ import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
 import { replaceParams } from '../../utils/langUtils';
 import { isMobileDevice } from '../../utils/deviceUtils';
+import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
 
 // 爱丽丝梦游仙境片段
 const ALICE_STORY = {
@@ -72,6 +73,30 @@ const isLastPage = (pageIndex: number) => {
   return pageIndex === totalPages - 1;
 };
 
+// VotingBook 组件：展示正在投票的书（链上集成预留接口）
+const VotingBook: React.FC = () => {
+  // TODO: 替换为链上查询逻辑
+  // 示例数据
+  const [book, setBook] = useState<any>({
+    title: '区块链协作小说',
+    author: 'Sui 用户',
+    paragraph_count: 5,
+    total_votes: 8,
+    status: 0,
+  });
+  // 可根据链上 currentBookId 判断是否有正在投票的书
+  if (!book) return null;
+  return (
+    <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <h2 className="text-2xl font-bold mb-2">正在投票的书：{book.title}</h2>
+      <p>作者：{book.author}</p>
+      <p>段落数：{book.paragraph_count}</p>
+      <p>总投票：{book.total_votes}</p>
+      <p>状态：{book.status === 0 ? '进行中' : '已归档'}</p>
+    </div>
+  );
+};
+
 const Home: React.FC = () => {
   const { t } = useLang();
   const [pageIndex, setPageIndex] = useState(0);
@@ -79,6 +104,20 @@ const Home: React.FC = () => {
   const [direction, setDirection] = useState(0); // -1: 向左翻, 1: 向右翻, 0: 不翻
   const [newParagraph, setNewParagraph] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const {
+    startNewBook,
+    addParagraph,
+    getAllBooks,
+    getAllParagraphs,
+    uploadToWalrus,
+    calcContentHash,
+  } = useSuiStory();
+
+  const [books, setBooks] = useState<any[]>([]);
+  const [currentBook, setCurrentBook] = useState<any>(null);
+  const [paragraphs, setParagraphs] = useState<any[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
   
   // 检测设备类型
   useEffect(() => {
@@ -92,6 +131,23 @@ const Home: React.FC = () => {
     return () => {
       window.removeEventListener('resize', checkDevice);
     };
+  }, []);
+  
+  // 获取所有书，找到进行中的书
+  useEffect(() => {
+    async function fetchBooks() {
+      const allBooks = await getAllBooks();
+      setBooks(allBooks);
+      const ongoing = allBooks.find((b: any) => b.status === 0);
+      setCurrentBook(ongoing || null);
+      if (ongoing) {
+        const paras = await getAllParagraphs(ongoing);
+        setParagraphs(paras);
+      } else {
+        setParagraphs([]);
+      }
+    }
+    fetchBooks();
   }, []);
   
   const goToNextPage = () => {
@@ -122,13 +178,37 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleSubmitParagraph = () => {
-    if (newParagraph.trim() && newParagraph.length <= 200) {
-      alert(t('form_success'));
-      setNewParagraph("");
-    } else if (newParagraph.length > 200) {
-      alert(t('form_error_length'));
+  // 提交新书 or 段落
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      if (!currentBook) {
+        // 提交新书
+        await startNewBook(input);
+      } else {
+        // 提交段落
+        // 先上传到 Walrus，拿到 walrus_id
+        const walrusId = await uploadToWalrus(input);
+        // 可选：计算内容哈希
+        // const contentHash = await calcContentHash(input);
+        await addParagraph(walrusId); // 这里假设 addParagraph 只存 walrus_id
+      }
+      setInput('');
+      // 刷新
+      const allBooks = await getAllBooks();
+      setBooks(allBooks);
+      const ongoing = allBooks.find((b: any) => b.status === 0);
+      setCurrentBook(ongoing || null);
+      if (ongoing) {
+        const paras = await getAllParagraphs(ongoing);
+        setParagraphs(paras);
+      } else {
+        setParagraphs([]);
+      }
+    } catch (e) {
+      alert('提交失败: ' + (e as any).message);
     }
+    setLoading(false);
   };
 
   // 页面变体 - 修正翻页方向
@@ -164,6 +244,17 @@ const Home: React.FC = () => {
   const currentPageParagraphs = getParagraphsForPage(pageIndex);
   const showSubmissionForm = isLastPage(pageIndex) && ALICE_STORY.paragraphs.length < ALICE_STORY.maxParagraphs;
 
+  // "正在投票的书" 示例数据
+  const votingBook = {
+    title: '爱丽丝梦游仙境',
+    author: 'Sui 用户',
+    paragraph_count: 8,
+    total_votes: 8,
+    status: 0,
+    maxParagraphs: 10,
+    collaborators: 7,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
@@ -188,16 +279,22 @@ const Home: React.FC = () => {
               p-4 flex flex-col justify-between
             `}>
               <div>
-                <h2 className="text-white text-xl font-bold mb-2">{t('book_title')}</h2>
-                <h3 className="text-amber-100 dark:text-gray-300 text-2xl font-serif mb-3">{ALICE_STORY.title}</h3>
+                <h2 className="text-white text-xl font-bold mb-2">当前协作故事</h2>
+                <h3 className="text-amber-100 dark:text-gray-300 text-2xl font-serif mb-3">{votingBook.title}</h3>
                 <p className="text-amber-200 dark:text-gray-400 text-sm">
-                  {replaceParams(t('book_authors'), { count: ALICE_STORY.collaborators })}
+                  由 {votingBook.collaborators} 位作者共同创作
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  {replaceParams(t('book_progress'), { 
-                    current: ALICE_STORY.paragraphs.length, 
-                    max: ALICE_STORY.maxParagraphs 
-                  })}
+                  当前进度: {votingBook.paragraph_count}/{votingBook.maxParagraphs} 段
+                </p>
+                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
+                  作者：{votingBook.author}
+                </p>
+                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
+                  总投票：{votingBook.total_votes}
+                </p>
+                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
+                  状态：{votingBook.status === 0 ? '进行中' : '已归档'}
                 </p>
               </div>
               <div className="flex justify-between items-center">
@@ -260,19 +357,20 @@ const Home: React.FC = () => {
                           className="w-full p-2 border border-amber-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                           rows={3}
                           placeholder={t('form_placeholder')}
-                          value={newParagraph}
-                          onChange={(e) => setNewParagraph(e.target.value)}
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
                           maxLength={200}
                         ></textarea>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-sm text-amber-700 dark:text-amber-300">
-                            {replaceParams(t('form_char_count'), { current: newParagraph.length })}
+                            {replaceParams(t('form_char_count'), { current: input.length })}
                           </span>
                           <button
-                            onClick={handleSubmitParagraph}
+                            onClick={handleSubmit}
                             className="px-4 py-1 bg-amber-600 hover:bg-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 text-white rounded"
+                            disabled={loading || !input.trim()}
                           >
-                            {t('btn_submit')}
+                            {loading ? '提交中...' : t('btn_submit')}
                           </button>
                         </div>
                       </div>

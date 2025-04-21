@@ -161,139 +161,73 @@ classDiagram
     CoreModule --> TokenModule
 ```
 
-### 数据模型
+### 数据模型（2024-04-21最新结构）
 
 ```mermaid
 classDiagram
-    class Story {
+    class StoryBook {
         +UID id
+        +vector~Book~ books
+        +u64 current_book_index
+    }
+    class Book {
         +String title
         +address author
+        +u8 status // 0=进行中, 1=已归档
+        +u64 index
+        +u64 total_votes
         +vector~Paragraph~ paragraphs
-        +Option~VotingSession~ current_voting
-        +bool completed
     }
-    
     class Paragraph {
-        +vector~u8~ walrus_id
-        +vector~u8~ content_hash
-        +String preview
+        +String content_or_walrus_id
         +address author
-        +u64 timestamp
+        +u64 votes
     }
-    
-    class VotingSession {
-        +vector~ParagraphProposal~ proposals
-        +Table~address,u64~ votes
-        +u64 start_time
-        +u64 end_time
-    }
-    
-    class Treasury {
-        +UID id
-        +Balance~NARR~ balance
-        +address admin
-    }
-    
-    Story "1" *-- "many" Paragraph
-    Story "1" *-- "0..1" VotingSession
-    VotingSession "1" *-- "many" ParagraphProposal
+    StoryBook "1" *-- "many" Book
+    Book "1" *-- "many" Paragraph
 ```
+
+#### 结构说明
+- **StoryBook**：全局唯一对象，管理所有 Book，current_book_index 指示当前活跃书本。
+- **Book**：一本协作小说，包含标题、作者、状态、段落列表等。
+- **Paragraph**：单个段落，链上仅存 walrus_id（或内容哈希），正文链下存储，votes 记录投票数。
+
+#### 主要变更
+- 段落正文不再直接存链上，链上仅存 walrus_id 或内容哈希，正文存于 Walrus，极大降低 gas 消耗。
+- 投票、归档等元数据链上管理，保证流程公开透明。
+- 合约接口全部采用 entry fun，便于前端直接调用。
+
+### 主流程
+1. **创建新书**：调用 start_new_book，链上生成 Book 元数据。
+2. **添加段落**：前端先上传正文到 Walrus，获得 walrus_id，再调用 add_paragraph，将 walrus_id 及作者地址写入链上。
+3. **投票**：用户对段落投票，vote_paragraph 增加 votes 计数。
+4. **归档**：投票/段落数满足条件后，archive_book 归档当前 Book，current_book_index 归零，前端可自动开启新书。
 
 ---
 
-## 5. Walrus存储策略
+## 5. Walrus存储策略（2024-04最新原理）
 
-### Walrus技术特点
+### 设计原则
+- **链上存元数据，链下存正文**：链上只存 walrus_id（或内容哈希），正文内容全部存储于 Walrus，既保证内容可验证，又极大降低链上成本。
+- **内容哈希校验**：前端上传内容到 Walrus 前，先计算内容哈希，链上可存储哈希值用于一致性校验，防止内容被篡改。
+- **内容可追溯**：每个段落的 walrus_id 唯一，用户可通过专属 URL 访问原文。
 
-```mermaid
-graph TD
-    A[Walrus技术] --> B[Sui原生存储]
-    A --> C[高数据可用性]
-    A --> D[去中心化托管]
-    A --> E[内容寻址]
-    A --> F[适配Sui生态]
-    
-    B --> G[无需外部依赖]
-    C --> H[内容持久性]
-    D --> I[SuiNS集成]
-    E --> J[高效内容检索]
-    F --> K[智能合约交互]
-```
+### 数据流与安全性
+1. **内容上传**：用户在前端输入正文，前端计算哈希并上传到 Walrus，获得 walrus_id。
+2. **链上登记**：前端调用合约，将 walrus_id、作者地址、内容哈希等写入链上 Paragraph。
+3. **内容校验**：任何人可通过链上哈希与 Walrus 返回内容比对，验证内容未被篡改。
+4. **内容访问**：通过 narrflow.wal.app/[walrus_id] 直接访问段落原文。
 
-### Walrus Sites集成
+### 优势
+- **极低链上存储成本**：正文链下存储，链上只存索引和哈希。
+- **内容可验证**：链上哈希+链下内容，保证内容完整性和不可抵赖。
+- **高可用性**：Walrus 多节点分布式存储，内容永不丢失。
+- **用户体验佳**：内容访问速度快，支持专属页面和 SuiNS 域名。
 
-**优势**:
-- 前端托管在Walrus Sites上，无需管理服务器
-- 通过site-builder工具简化部署流程
-- 为每个故事生成专属URL: narrflow.wal.app/[故事ID]
-- 利用SuiNS系统实现人性化命名
-- 内容存储由多节点分布式保障
-
-### 内容存储流程
-
-```mermaid
-graph TB
-    subgraph "内容创建流程"
-        A[用户创建内容] --> B[前端计算内容哈希]
-        B --> C[上传到Walrus存储]
-        C --> D[获取Walrus ID]
-        D --> E[提交交易到Sui链]
-    end
-    
-    subgraph "链上存储内容"
-        E --> F[故事元数据]
-        E --> G[内容哈希]
-        E --> H[Walrus ID]
-        E --> I[创作者信息]
-        E --> J[投票数据]
-    end
-    
-    subgraph "内容获取流程"
-        K[用户请求内容] --> L[获取链上元数据]
-        L --> M[通过Walrus ID获取内容]
-        M --> N[验证内容哈希]
-        N --> O[显示内容]
-    end
-```
-
-### 代码实现
-
-```move
-struct Paragraph has store {
-    walrus_id: vector<u8>,    // Walrus上内容的唯一标识符
-    content_hash: vector<u8>, // 内容哈希，用于验证
-    preview: String,          // 短预览（约50字节）
-    author: address,
-    timestamp: u64
-}
-
-// 添加段落函数
-public fun add_paragraph(
-    story: &mut Story, 
-    walrus_id: vector<u8>,
-    content_hash: vector<u8>,
-    preview: String,
-    ctx: &mut TxContext
-) {
-    let paragraph = Paragraph {
-        walrus_id,
-        content_hash,
-        preview,
-        author: tx_context::sender(ctx),
-        timestamp: tx_context::epoch(ctx)
-    };
-    vector::push_back(&mut story.paragraphs, paragraph);
-}
-```
-
-### 为何选择Walrus
-
-1. **原生集成**: 作为Sui生态的存储解决方案，与智能合约无缝对接
-2. **高可用性**: 去中心化存储保证内容不会丢失
-3. **前端托管**: Walrus Sites简化了项目部署流程
-4. **用户体验**: 读取和显示内容速度更快，支持专属页面
-5. **链生态**: 完全在Sui生态内运行，不依赖外部系统
+### 典型场景
+- **协作创作**：每个段落链上登记，正文链下存储，投票和奖励链上透明可查。
+- **内容追溯**：任何人可通过链上数据和 Walrus 校验内容真伪。
+- **归档与检索**：已归档书本和段落可随时检索和访问。
 
 ---
 

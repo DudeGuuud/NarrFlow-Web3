@@ -242,10 +242,10 @@ npm install @mysten/sui-kit @mysten/wallet-kit
 # Walrus 相关
 npm install walrus-site-builder
 
-# 开发工具
-npm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
-npm install -D prettier eslint-config-prettier eslint-plugin-prettier
-npm install -D husky lint-staged 
+# 开发工具(请务必使用pnpm)
+pnpm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
+pnpm install -D prettier eslint-config-prettier eslint-plugin-prettier
+pnpm install -D husky lint-staged 
 
 ## 2025-04-18 NarrFlow后端开发与Walrus主网托管实施计划
 
@@ -329,4 +329,32 @@ npm install -D husky lint-staged
 
 ---
 
-本实施计划结合NarrFlow业务需求、Sui+Walrus最新技术生态、Web3开发最佳实践，可行性高、扩展性强、安全合规。后续可根据主网进展和社区反馈持续优化细节，确保NarrFlow成为Web3协作叙事领域的标杆项目。 
+本实施计划结合NarrFlow业务需求、Sui+Walrus最新技术生态、Web3开发最佳实践，可行性高、扩展性强、安全合规。后续可根据主网进展和社区反馈持续优化细节，确保NarrFlow成为Web3协作叙事领域的标杆项目。
+
+## 2024-04-21 近期开发进展与合约结构升级
+
+### 1. 前端依赖与Sui SDK适配
+- 清理并重装依赖，修正了 node_modules 缺失和类型声明报错。
+- 统一前端 hooks 路径，修正 useSuiStoryWithWalrus 导入路径错误。
+- 集成 @mysten/dapp-kit 和 @tanstack/react-query，采用官方 Provider 体系管理 SuiClient 和钱包上下文。
+
+### 2. 智能合约结构与存储方式变更
+- 合约采用 narr_flow.move 作为主业务入口，story.move 负责故事与段落管理，token.move 负责代币与奖励。
+- Book/Paragraph 结构简化，链上仅存元数据与投票，正文内容通过 Walrus 存储，链上仅存 content/walrus_id。
+- StoryBook 作为全局唯一对象，管理所有 Book，current_book_index 指示当前活跃书本。
+- 合约接口全部采用 entry fun，便于前端直接调用。
+- 奖励逻辑与事件系统分离，便于后续扩展。
+
+### 3. 存储与内容验证
+- 前端内容先上传 Walrus，获得 walrus_id，再提交链上。
+- 段落结构支持内容哈希校验，提升内容一致性与防篡改能力。
+- 归档机制优化，Book 归档后自动切换 current_book_index，前端可检测并自动开启新书。
+
+### 4. 文档与演示同步
+- demonstrate.md 已同步合约结构与存储原理，详细说明链上与链下协作机制。
+- 补充合约主流程、数据流、奖励分发等原理性说明。
+
+### 5. 未来计划
+- 完善合约事件系统，支持更细粒度的链上通知。
+- 推进 Walrus SDK 深度集成，实现内容上传/校验/检索全流程自动化。
+- 持续优化前端体验，提升响应速度与交互流畅性。 

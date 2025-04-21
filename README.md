@@ -32,30 +32,45 @@ NarrFlow 是一个基于区块链技术的去中心化协作小说创作平台�
 
 项目包含三个主要合约模块：
 
-1. **story.move** - 故事创建和投票管理
-   - 创建和管理故事
-   - 添加段落、提交提案
-   - 投票系统和胜出提案选择
+1. **story.move** - 故事与段落管理
+   - 创建和管理故事（Book）
+   - 添加段落（Paragraph），链上仅存 walrus_id 或内容哈希，正文链下存储
+   - 投票系统和归档机制，所有元数据链上透明可查
 
 2. **token.move** - 代币和奖励系统
-   - NARR代币管理
-   - 用户奖励发放
-   - 财库管理
+   - NARR代币管理与财库
+   - 用户奖励发放（创作、投票、获胜等）
+   - 管理员权限控制
 
 3. **narr_flow.move** - 核心业务逻辑模块
-   - 连接故事和代币模块
-   - 处理复合业务逻辑
-   - 权限管理
+   - 连接故事和代币模块，聚合业务流程
+   - 所有合约接口均为 entry fun，便于前端直接调用
+   - 奖励逻辑与事件系统分离，便于扩展
+
+### 最新数据结构（2024-06）
+- **StoryBook**：全局唯一对象，管理所有 Book，current_book_index 指示当前活跃书本
+- **Book**：包含标题、作者、状态、段落列表等
+- **Paragraph**：链上仅存 walrus_id（或内容哈希）与投票数，正文链下存储
 
 ## 存储策略
 
 NarrFlow采用Walrus作为存储解决方案，具有以下优势：
 
-- **前端托管**：使用Walrus Sites部署前端应用，无需管理服务器
-- **内容存储**：故事和段落内容存储在Walrus中，确保持久性
-- **专属页面**：每个故事拥有专属URL（narrflow.wal.app/[故事ID]）
+- **链上存元数据，链下存正文**：正文内容全部存储于 Walrus，链上仅存 walrus_id 或内容哈希，极大降低链上成本
+- **内容哈希校验**：前端上传内容到 Walrus 前先计算内容哈希，链上可存储哈希值用于一致性校验，防止内容被篡改
+- **内容可追溯**：每个段落的 walrus_id 唯一，用户可通过 narrflow.wal.app/[walrus_id] 访问原文
+- **高可用性**：Walrus 多节点分布式存储，内容永不丢失
 - **SuiNS集成**：利用SuiNS提供人性化域名，无需传统DNS
-- **高数据可用性**：去中心化存储确保内容不会丢失
+
+### 内容上链流程
+1. 前端输入正文，计算哈希并上传到 Walrus，获得 walrus_id
+2. 前端调用合约，将 walrus_id、作者地址、内容哈希等写入链上 Paragraph
+3. 任何人可通过链上哈希与 Walrus 返回内容比对，验证内容未被篡改
+
+## 前端集成与Provider体系
+- 采用 @mysten/dapp-kit 和 @tanstack/react-query，统一管理 SuiClient 和钱包上下文
+- 所有合约调用均通过官方 Provider 体系封装，保证类型安全和上下文一致性
+- hooks 路径规范，统一为 src/hooks/useSuiStoryWithWalrus
 
 ## 安装与使用
 
@@ -67,16 +82,16 @@ git clone https://github.com/DudeGuuud/NarrFlow-Web3.git
 cd NarrFlow-Web3
 
 # 安装依赖
-npm install
+pnpm install
 
 # 启动开发服务器
-npm run dev
+pnpm run dev
 
 # 构建生产版本
-npm run build
+pnpm run build
 
 # 部署到Walrus Sites
-npx walrus-site-builder publish
+pnpx walrus-site-builder publish
 ```
 
 ### 智能合约
@@ -89,7 +104,7 @@ cd move
 sui move build
 
 # 部署合约
-sui client publish --gas-budget 100000000
+sui client publish
 ```
 
 ## 开发状态
@@ -104,6 +119,10 @@ sui client publish --gas-budget 100000000
 - 🔄 Walrus存储集成 (进行中)
 - 🔄 用户体验优化 (进行中)
 - ⬜ 测试与部署 (计划中)
+
+##了解更多信息请看
+NarrFlow-Web3/demonstrate.md
+NarrFlow-Web3/dev_log.md
 
 ## 贡献
 
