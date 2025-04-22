@@ -43,7 +43,7 @@ module narr_flow::token {
     // 一次性初始化函数，创建代币并设置财库
     fun init(witness: TOKEN, ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
-        let url = url::new_unsafe_from_bytes(b"https://avatars.githubusercontent.com/u/40078659?v=4");
+        let url = url::new_unsafe_from_bytes(b"https://raw.githubusercontent.com/DudeGuuud/NarrFlow-Web3/refs/heads/dev/public/logo_white.png");
         let yes = some<Url>(url);
         // 创建TOKEN代币
         let (mut treasury_cap, metadata) = coin::create_currency(
