@@ -1,9 +1,5 @@
 module narr_flow::story {
-    use sui::object::{Self, UID};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use std::string;
-    use std::vector;
 
     /// 段落对象
     public struct Paragraph has copy, drop, store {
@@ -20,6 +16,7 @@ module narr_flow::story {
         index: u64, // 第几本书
         total_votes: u64,
         paragraphs: vector<Paragraph>,
+        archive_votes_threshold: u64, // 归档所需总票数（可自定义）
     }
 
     /// 故事列表对象（全局唯一，shared）
@@ -35,12 +32,18 @@ module narr_flow::story {
         transfer::share_object(book);
     }
 
-    /// 开启新书
+    /// 开启新书（可指定归档票数阈值，默认10）
     public entry fun start_new_book(
         story_book: &mut StoryBook,
         title: string::String,
-        author: address
+        author: address,
+        archive_votes_threshold: u64
     ) {
+        let threshold = if (archive_votes_threshold > 0) {
+            archive_votes_threshold
+        } else {
+            10
+        };
         let book = Book {
             title,
             author,
@@ -48,6 +51,7 @@ module narr_flow::story {
             index: vector::length(&story_book.books) + 1,
             total_votes: 0,
             paragraphs: vector::empty<Paragraph>(),
+            archive_votes_threshold: threshold,
         };
         vector::push_back(&mut story_book.books, book);
         story_book.current_book_index = vector::length(&story_book.books) - 1;
@@ -75,17 +79,20 @@ module narr_flow::story {
     ) {
         let idx = story_book.current_book_index;
         let book_ref = vector::borrow_mut(&mut story_book.books, idx);
+        assert!(book_ref.status == 0, 120); // 只能对进行中的书投票
         let para_ref = vector::borrow_mut(&mut book_ref.paragraphs, para_index);
         para_ref.votes = para_ref.votes + 1;
         book_ref.total_votes = book_ref.total_votes + 1;
     }
 
-    /// 归档书本（投票满后自动归档）
+    /// 归档书本（票数达到阈值时可归档）
     public entry fun archive_book(
         story_book: &mut StoryBook
     ) {
         let idx = story_book.current_book_index;
         let book_ref = vector::borrow_mut(&mut story_book.books, idx);
+        assert!(book_ref.status == 0, 130);
+        assert!(book_ref.total_votes >= book_ref.archive_votes_threshold, 131); // 票数未达阈值不能归档
         book_ref.status = 1;
         // 归档后 current_book_index 指向无效，需前端检测后自动开启新书
         story_book.current_book_index = 0;

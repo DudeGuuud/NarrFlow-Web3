@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { FadeIn } from '../../components/animations';
 import Navbar from '../../components/layout/Navbar';
 import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { useLang } from '../../contexts/lang/LangContext';
+import { useNavigate } from 'react-router-dom';
 
 // ArchivedBooks 组件：展示所有已归档的书（链上集成预留接口）
 const ArchivedBooks: React.FC = () => {
@@ -28,8 +30,10 @@ const ArchivedBooks: React.FC = () => {
 };
 
 const BrowseStories: React.FC = () => {
-  const { getAllBooks, getAllParagraphs } = useSuiStory();
+  const { getAllBooks } = useSuiStory();
+  const { t } = useLang();
   const [archivedBooks, setArchivedBooks] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetch() {
@@ -39,16 +43,24 @@ const BrowseStories: React.FC = () => {
     fetch();
   }, []);
 
+  if (!archivedBooks.length) return <div>{t('暂无归档书') || '暂无归档书'}</div>;
+
   return (
     <div>
-      <h2>已归档故事</h2>
-      {archivedBooks.map((book, idx) => (
-        <div key={idx} className="archived-book-card">
-          <h3>{book.title}</h3>
-          <p>作者: {book.author}</p>
-          <p>段落数: {book.paragraphs?.length || 0}</p>
-        </div>
-      ))}
+      <h2 className="text-2xl font-bold mb-4">{t('已归档的书') || '已归档的书'}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {archivedBooks.map((book, idx) => (
+          <div
+            key={idx}
+            className="p-4 border rounded shadow hover:shadow-lg cursor-pointer bg-white dark:bg-gray-800 transition"
+            onClick={() => navigate(`/story/${book.index}`)}
+          >
+            <h3 className="font-bold text-lg">{book.title}（{t('已归档') || '已归档'}）</h3>
+            <p>{t('段落数') || '段落数'}: {book.paragraphs?.length || 0}</p>
+            <p>{t('总投票') || '总投票'}: {book.total_votes ?? 0}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -63,8 +75,6 @@ const Story: React.FC = () => {
             故事页面
           </h1>
         </FadeIn>
-        {/* 插入归档书展示区 */}
-        <ArchivedBooks />
         <BrowseStories />
       </div>
     </div>

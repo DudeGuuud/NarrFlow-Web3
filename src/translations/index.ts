@@ -47,7 +47,31 @@ export const translations: { [key: string]: TranslationType } = {
     
     // 浏览故事卡片
     browse_card_title: 'Browse Stories',
-    browse_card_desc: 'Explore creations by other authors and vote to decide story directions'
+    browse_card_desc: 'Explore creations by other authors and vote to decide story directions',
+
+    create_book_title: 'Collaborative Book Title',
+    create_book_index: 'Book #{index}',
+    create_status: 'Status',
+    create_status_ongoing: 'Ongoing',
+    create_status_archived: 'Archived',
+    create_archive_threshold: 'Archive Vote Threshold',
+    create_total_votes: 'Total Votes',
+    create_paragraph_list: 'Paragraph List',
+    create_add_paragraph: 'Add New Paragraph',
+    create_paragraph_number: 'Paragraph #{number}',
+    create_content: 'Content',
+    create_author: 'Author',
+    create_votes: 'Votes',
+    create_submit: 'Submit Paragraph',
+    create_archiving: 'Archive Book',
+    create_edit_title: 'Editing Book Title',
+    create_edit_paragraph: 'Editing Paragraph',
+    create_title_placeholder: 'Enter book title (max 100 bytes)',
+    create_paragraph_placeholder: 'Enter paragraph (max 2000 bytes)',
+    create_title_byte_count: 'Input: {current}/100 bytes',
+    create_paragraph_byte_count: 'Input: {current}/2000 bytes',
+    create_title_too_long: 'Book title cannot exceed 100 bytes!',
+    create_paragraph_too_long: 'Paragraph cannot exceed 2000 bytes!'
   },
   
   zh: {
@@ -86,6 +110,30 @@ export const translations: { [key: string]: TranslationType } = {
     
     // 浏览故事卡片
     browse_card_title: '浏览故事',
-    browse_card_desc: '探索其他作者的创作，参与投票决定故事走向'
+    browse_card_desc: '探索其他作者的创作，参与投票决定故事走向',
+
+    create_book_title: '协作书名',
+    create_book_index: '第{index}本',
+    create_status: '状态',
+    create_status_ongoing: '进行中',
+    create_status_archived: '已归档',
+    create_archive_threshold: '归档票数阈值',
+    create_total_votes: '当前总票数',
+    create_paragraph_list: '段落列表',
+    create_add_paragraph: '添加新段落',
+    create_paragraph_number: '第{number}段',
+    create_content: '内容',
+    create_author: '作者',
+    create_votes: '投票数',
+    create_submit: '提交段落',
+    create_archiving: '归档本书',
+    create_edit_title: '正在编辑书名',
+    create_edit_paragraph: '正在编辑段落',
+    create_title_placeholder: '请输入书名（不超过100字节）',
+    create_paragraph_placeholder: '请输入段落内容（不超过2000字节）',
+    create_title_byte_count: '已输入：{current}/100 字节',
+    create_paragraph_byte_count: '已输入：{current}/2000 字节',
+    create_title_too_long: '书名不能超过100字节！',
+    create_paragraph_too_long: '段落内容不能超过2000字节！'
   }
 }; 

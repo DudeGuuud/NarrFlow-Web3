@@ -2,7 +2,6 @@ module narr_flow::narr_flow {
     use std::string::{String};
     use narr_flow::story::{Self, StoryBook};
     use narr_flow::token::{Self, Treasury};
-    
     const ENotAuthorized: u64 = 0;
     
     // 平台管理员能力结构
@@ -65,7 +64,7 @@ module narr_flow::narr_flow {
         _ctx: &mut TxContext
     ) {
         let _sender = tx_context::sender(_ctx);
-        story::start_new_book(story_book, title, _sender);
+        story::start_new_book(story_book, title, _sender, 1);
         let _book_index = story::get_current_book_index(story_book);
         // token::reward_story_creation(_treasury, _sender, _book_index, _ctx); // 你可自定义奖励逻辑
         // event::emit(StoryCreatedWithReward { book_index: _book_index, author: _sender, title, reward_amount: 0 });

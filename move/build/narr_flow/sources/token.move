@@ -2,7 +2,6 @@ module narr_flow::token {
     use sui::coin::{Self, Coin};
     use sui::balance::{Self, Balance};
     use sui::event;
-    use sui::object::{ID};
     
     // 错误代码
     const EInsufficientBalance: u64 = 0;

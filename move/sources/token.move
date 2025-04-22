@@ -2,7 +2,6 @@ module narr_flow::token {
     use sui::coin::{Self, Coin};
     use sui::balance::{Self, Balance};
     use sui::event;
-    use sui::object::{ID};
     
     // 错误代码
     const EInsufficientBalance: u64 = 0;
@@ -47,9 +46,9 @@ module narr_flow::token {
         let (mut treasury_cap, metadata) = coin::create_currency(
             witness, // 见证者模式
             9, // 小数位
-            b"ABC", // 符号
-            b"ABC", // 名称
-            b"ABC", // 描述
+            b"NARR", // 符号
+            b"NARR", // 名称
+            b"Coin For Narrflow", // 描述
             option::none(), // 图标URL
             ctx
         );

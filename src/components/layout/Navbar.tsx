@@ -4,7 +4,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLang } from '../../contexts/lang/LangContext';
 import { isMobileDevice } from '../../utils/deviceUtils';
 import { Globe, Sun, Moon, Menu, X, Check } from 'lucide-react';
-import { ConnectButton, useWallet, addressEllipsis } from '@suiet/wallet-kit';
+import { ConnectButton } from '@suiet/wallet-kit';
 import '@suiet/wallet-kit/style.css';
 
 // 导航链接配置
@@ -44,7 +44,6 @@ const Navbar: React.FC = () => {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
-  const wallet = useWallet();
 
   // 检测设备类型
   useEffect(() => {
@@ -96,7 +95,7 @@ const Navbar: React.FC = () => {
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 backdrop-blur-md bg-white/70 dark:bg-gray-900/70">
       <div className="container flex h-14 items-center">
         <Link to="/" title="Home">
-          <img src="/Logo.svg" alt="Logo" className="w-7 h-7" />
+          <img src="/logo_white.png" alt="Logo" className="h-10 w-10 ml-10" />
         </Link>
 
         {/* Desktop Nav */}
@@ -120,15 +119,7 @@ const Navbar: React.FC = () => {
         {/* Right Side Actions - 钱包连接按钮和钱包信息 */}
         <div className="flex-1 flex justify-end items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <ConnectButton label={t('btn_connect_wallet')} />
-            {wallet?.account && (
-              <div className="flex flex-col items-end text-xs text-gray-700 dark:text-gray-300">
-                <span>{addressEllipsis(wallet.account.address)}</span>
-                <span className="text-[10px] text-primary-500 dark:text-primary-300">
-                  {wallet.chain?.name || 'Unknown Network'}
-                </span>
-              </div>
-            )}
+            <ConnectButton />
           </div>
           {/* 语言切换 */}
           <div className="relative" ref={langMenuRef}>

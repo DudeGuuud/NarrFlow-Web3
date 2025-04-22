@@ -8,7 +8,7 @@ export type LangType = keyof typeof SupportedLanguages;
 interface LangContextType {
   lang: LangType;
   setLang: (lang: LangType) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
 }
 
 // 创建语言上下文
@@ -66,20 +66,23 @@ export const LangProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   // 翻译函数
-  const t = (key: string): string => {
+  const t = (key: string, params?: Record<string, any>): string => {
     try {
       // 获取当前语言的翻译
-      const langTranslations = translations[lang] || {};
+      let str = translations[lang][key] || key;
       
-      // 如果找不到翻译，尝试使用英文翻译，如果还是找不到则返回键名
-      const translation = langTranslations[key] || translations.en[key] || key;
+      if (params) {
+        Object.keys(params).forEach(k => {
+          str = str.replace(new RegExp(`{${k}}`, 'g'), params[k]);
+        });
+      }
       
       // 当找不到翻译时记录日志，便于调试
-      if (translation === key && key !== '') {
+      if (str === key && key !== '') {
         console.warn(`Translation not found for key: "${key}" in language: ${lang}`);
       }
       
-      return translation;
+      return str;
     } catch (error) {
       console.error(`Error translating key "${key}":`, error);
       return key; // 出错时返回原始键名
