@@ -2,7 +2,9 @@ module narr_flow::token {
     use sui::coin::{Self, Coin};
     use sui::balance::{Self, Balance};
     use sui::event;
-    
+    use std::option::some;
+    use sui::url;
+    use sui::url::Url;
     // 错误代码
     const EInsufficientBalance: u64 = 0;
     const ENotAuthorized: u64 = 1;
@@ -41,15 +43,16 @@ module narr_flow::token {
     // 一次性初始化函数，创建代币并设置财库
     fun init(witness: TOKEN, ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
-        
+        let url = url::new_unsafe_from_bytes(b"https://avatars.githubusercontent.com/u/40078659?v=4");
+        let yes = some<Url>(url);
         // 创建TOKEN代币
         let (mut treasury_cap, metadata) = coin::create_currency(
             witness, // 见证者模式
             9, // 小数位
-            b"ABC", // 符号
-            b"ABC", // 名称
-            b"ABC", // 描述
-            option::none(), // 图标URL
+            b"NARR", // 符号
+            b"NARR", // 名称
+            b"Coin For Narrflow", // 描述
+            yes, // 图标URL
             ctx
         );
         
