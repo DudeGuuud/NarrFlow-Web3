@@ -7,6 +7,8 @@ import { useLang } from '../../contexts/lang/LangContext';
 import { replaceParams } from '../../utils/langUtils';
 import { isMobileDevice } from '../../utils/deviceUtils';
 import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { shortenAddress } from '../../utils/langUtils';
+import { decompressFromBase64 } from 'lz-string';
 
 const MAX_BYTES = 2000;
 
@@ -45,7 +47,6 @@ const Home: React.FC = () => {
     addParagraph,
     getAllBooks,
     getAllParagraphs,
-    uploadToWalrus,
     calcContentHash,
   } = useSuiStory();
 
@@ -143,6 +144,9 @@ const Home: React.FC = () => {
     }
   };
 
+  // 判断当前是提交书名还是段落
+  const isEditingTitle = !currentBook || currentBook.status === 1;
+
   // 提交新书 or 段落
   const handleSubmit = async () => {
     setLoading(true);
@@ -150,8 +154,7 @@ const Home: React.FC = () => {
       if (!currentBook) {
         await startNewBook(input);
       } else {
-        const walrusId = await uploadToWalrus(input);
-        await addParagraph(walrusId);
+        await addParagraph(input);
       }
       setInput('');
       // 刷新
@@ -204,14 +207,22 @@ const Home: React.FC = () => {
 
   // 书本信息（链上数据）
   const votingBook = currentBook || {
-    title: '区块链协作小说',
-    author: 'Sui 用户',
-    paragraph_count: paragraphs.length,
-    total_votes: paragraphs.reduce((sum: number, p: any) => sum + (p.votes || 0), 0),
+    title: t('暂无书本'),
+    author: '',
+    paragraph_count: 0,
+    total_votes: 0,
     status: 0,
     maxParagraphs,
     collaborators: 0,
   };
+
+  // 由段落去重 author 得到作者数
+  const authorSet = new Set((paragraphs || []).map((p: any) => p.author));
+  const collaborators = authorSet.size;
+  // 总投票数
+  const totalVotes = (paragraphs || []).reduce((sum: number, p: any) => sum + (p.votes || 0), 0);
+  // 作者地址缩略
+  const authorShort = votingBook.author ? shortenAddress(votingBook.author) : '';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
@@ -238,19 +249,19 @@ const Home: React.FC = () => {
                 <h2 className="text-white text-xl font-bold mb-2">当前协作故事</h2>
                 <h3 className="text-amber-100 dark:text-gray-300 text-2xl font-serif mb-3">{votingBook.title}</h3>
                 <p className="text-amber-200 dark:text-gray-400 text-sm">
-                  由 {votingBook.collaborators} 位作者共同创作
+                  {t('book_authors', { count: collaborators })}
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  当前进度: {votingBook.paragraph_count}/{votingBook.maxParagraphs} 段
+                  {t('book_progress', { current: paragraphs.length, max: votingBook.maxParagraphs })}
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  作者：{votingBook.author}
+                  {t('create_author')}：{authorShort}
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  总投票：{votingBook.total_votes}
+                  {t('create_total_votes')}：{totalVotes}
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  状态：{votingBook.status === 0 ? '进行中' : '已归档'}
+                  {t('create_status')}：{votingBook.status === 0 ? t('create_status_ongoing') : t('create_status_archived')}
                 </p>
               </div>
               <div className="flex justify-between items-center">
@@ -284,11 +295,11 @@ const Home: React.FC = () => {
                         key={idx} 
                         className={`${isMobile ? 'mb-5' : 'mb-8'} last:mb-4`}
                       >
-                        <p className={`
-                          ${isMobile ? 'text-base' : 'text-lg'} 
-                          leading-relaxed font-serif mb-1 pl-6 first-letter:text-xl first-letter:font-bold
-                        `}>
-                          {paragraph.content || paragraph.walrus_id}
+                        <p className={
+                          `${isMobile ? 'text-base' : 'text-lg'} 
+                          leading-relaxed font-serif mb-1 pl-6 first-letter:text-xl first-letter:font-bold`
+                        }>
+                          {paragraph.content ? decompressFromBase64(paragraph.content) : paragraph.walrus_id}
                         </p>
                         <div className="flex justify-end items-center mt-0.5 text-xs text-gray-400 dark:text-gray-500 opacity-70">
                           <span className="mr-3 italic">—— {paragraph.author}</span>
@@ -305,12 +316,12 @@ const Home: React.FC = () => {
                     {showSubmissionForm && (
                       <div className="mt-6 p-4 bg-amber-50 dark:bg-gray-800 rounded-lg">
                         <h4 className="text-lg font-medium text-amber-900 dark:text-amber-200 mb-2">
-                          {t('form_title')}
+                          {isEditingTitle ? '请输入新书标题' : '请输入新段落内容'}
                         </h4>
                         <textarea
                           className="w-full p-2 border border-amber-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                           rows={3}
-                          placeholder={t('form_placeholder')}
+                          placeholder={isEditingTitle ? '输入新书标题...' : '输入新段落内容...'}
                           value={input}
                           onChange={handleInputChange}
                         ></textarea>
@@ -323,7 +334,7 @@ const Home: React.FC = () => {
                             className="px-4 py-1 bg-amber-600 hover:bg-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 text-white rounded"
                             disabled={loading || !input.trim() || inputBytes > MAX_BYTES}
                           >
-                            {loading ? '提交中...' : t('btn_submit')}
+                            {loading ? '提交中...' : isEditingTitle ? '提交书名' : '提交段落'}
                           </button>
                         </div>
                       </div>

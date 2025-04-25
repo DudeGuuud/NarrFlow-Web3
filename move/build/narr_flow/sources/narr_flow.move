@@ -64,7 +64,7 @@ module narr_flow::narr_flow {
         _ctx: &mut TxContext
     ) {
         let _sender = tx_context::sender(_ctx);
-        story::start_new_book(story_book, title, _sender, 1);
+        story::start_new_book(story_book, title, _sender, _treasury, _ctx);
         let _book_index = story::get_current_book_index(story_book);
         // token::reward_story_creation(_treasury, _sender, _book_index, _ctx); // 你可自定义奖励逻辑
         // event::emit(StoryCreatedWithReward { book_index: _book_index, author: _sender, title, reward_amount: 0 });
@@ -78,7 +78,7 @@ module narr_flow::narr_flow {
         _ctx: &mut TxContext
     ) {
         let _sender = tx_context::sender(_ctx);
-        story::add_paragraph(story_book, content, _sender);
+        story::add_paragraph(story_book, content, _sender, _treasury, _ctx);
         let _book_index = story::get_current_book_index(story_book);
         // token::reward_paragraph_addition(_treasury, _sender, _book_index, _ctx);
         // event::emit(ParagraphAddedWithReward { book_index: _book_index, author: _sender, content_preview: content, reward_amount: 0 });
@@ -148,7 +148,7 @@ module narr_flow::narr_flow {
         story_book: &mut StoryBook,
         _ctx: &mut TxContext
     ) {
-        story::archive_book(story_book);
+        story::archive_book(story_book, _treasury, _ctx);
         let _book_index = story::get_current_book_index(story_book);
         // 可在此处奖励归档相关用户
     }
@@ -167,6 +167,6 @@ module narr_flow::narr_flow {
         let _sender = tx_context::sender(_ctx);
         assert!(_sender == _platform_cap.admin, ENotAuthorized);
         let story_id_opt = std::option::none<ID>();
-        token::admin_reward(_treasury, receiver, amount, story_id_opt, _ctx);
+        // token::admin_reward(_treasury, receiver, amount, story_id_opt, _ctx);
     }
 } 

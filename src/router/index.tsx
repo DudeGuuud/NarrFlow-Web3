@@ -4,6 +4,7 @@ import Home from '../pages/Home';
 import Story from '../pages/Story';
 import Create from '../pages/Create';
 import Profile from '../pages/Profile';
+import LatestStory from '../pages/Story/Latest';
 
 const withTransition = (Component: React.ComponentType) => {
   return (
@@ -29,5 +30,9 @@ export const router = createBrowserRouter([
   {
     path: '/profile',
     element: withTransition(Profile),
+  },
+  {
+    path: '/story/latest',
+    element: withTransition(LatestStory),
   },
 ]);

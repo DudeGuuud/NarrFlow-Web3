@@ -5,7 +5,7 @@ import { useLang } from '../../contexts/lang/LangContext';
 import Navbar from '../../components/layout/Navbar';
 
 const BookDetail: React.FC = () => {
-  const { getAllBooks, downloadFromWalrus } = useSuiStory();
+  const { getBookByIndex, getAllParagraphContents } = useSuiStory();
   const { t } = useLang();
   const { index } = useParams<{ index: string }>();
   const [book, setBook] = useState<any>(null);
@@ -16,26 +16,14 @@ const BookDetail: React.FC = () => {
   useEffect(() => {
     async function fetchBook() {
       setLoading(true);
-      const allBooks = await getAllBooks();
-      const b = allBooks.find((b: any) => String(b.index) === String(index));
+      if (!index) return;
+      const b = await getBookByIndex(Number(index));
       setBook(b);
-      if (b && Array.isArray(b.paragraphs)) {
-        // 并发下载所有段落内容
-        const contents = await Promise.all(
-          b.paragraphs.map(async (p: any) => {
-            if (p.content) return p.content; // 兼容链上直接存内容
-            if (p.walrus_id || p.blobId) {
-              try {
-                const blob = await downloadFromWalrus(p.walrus_id || p.blobId);
-                return await blob.text();
-              } catch {
-                return t('内容获取失败') || '内容获取失败';
-              }
-            }
-            return '';
-          })
-        );
+      if (b) {
+        const contents = await getAllParagraphContents(b);
         setParagraphs(contents);
+      } else {
+        setParagraphs([]);
       }
       setLoading(false);
     }

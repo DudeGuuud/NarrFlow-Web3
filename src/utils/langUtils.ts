@@ -39,3 +39,10 @@ export const getBrowserLanguage = (): string => {
   // 默认返回英文
   return 'en-US';
 }; 
+
+// 地址缩略显示 0x1234...abcd
+export function shortenAddress(addr: string, head = 4, tail = 4) {
+  if (!addr) return '';
+  if (addr.length <= head + tail + 2) return addr;
+  return addr.slice(0, head + 2) + '...' + addr.slice(-tail);
+} 

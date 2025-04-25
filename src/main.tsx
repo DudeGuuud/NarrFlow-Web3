@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <WalletProvider>
         <ThemeProvider>
           <LangProvider>
-            <RouterProvider router={router} />
+            <RouterProvider router={router} future={{ v7_startTransition: true }} />
           </LangProvider>
         </ThemeProvider>
       </WalletProvider>
