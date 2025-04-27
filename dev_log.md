@@ -1,6 +1,6 @@
 # NarrFlow 开发日志
 
-## 2024-06-XX 重大方案调整：投票逻辑链下化与Walrus废弃
+## 重大方案调整：投票逻辑链下化与Walrus废弃
 
 ### 变更背景
 - 早期方案尝试过"全链上投票"与"全Walrus投票"，即所有投票数据和统计均在区块链或Walrus存储中完成。
@@ -31,7 +31,7 @@
 ## 项目概述
 NarrFlow是一个基于区块链技术的去中心化协作小说创作平台，使用React + TypeScript开发前端，Move语言开发智能合约。
 
-## 2024-03-22 项目启动
+## 项目启动
 
 ### 1. 技术栈选择
 #### 前端技术
@@ -120,7 +120,7 @@ Demo/
 2. 搭建基础项目结构
 3. 开始开发基础组件
 
-## 2024-04-17 Phase 1完成
+## Phase 1完成
 
 ### 完成内容
 1. 完成项目初始化和基础配置
@@ -152,7 +152,7 @@ Demo/
 2. 部分组件需要进一步优化性能
 3. 尚未与区块链集成
 
-## 2024-05-15 区块链智能合约开发完成
+##  区块链智能合约开发完成
 
 ### 完成内容
 1. 智能合约架构设计
@@ -199,7 +199,7 @@ Demo/
    - 集成测试前后端交互
    - 安全审计和性能优化
 
-## 2024-05-20 存储策略优化：采用Walrus解决方案
+## 存储策略优化：采用Walrus解决方案
 
 ### 完成内容
 1. 存储策略设计
@@ -275,7 +275,7 @@ pnpm install -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
 pnpm install -D prettier eslint-config-prettier eslint-plugin-prettier
 pnpm install -D husky lint-staged 
 
-## 2025-04-18 NarrFlow后端开发与Walrus主网托管实施计划
+## NarrFlow后端开发与Walrus主网托管实施计划
 
 ### 一、后端（链上）逻辑开发计划
 
@@ -359,7 +359,7 @@ pnpm install -D husky lint-staged
 
 本实施计划结合NarrFlow业务需求、Sui+Walrus最新技术生态、Web3开发最佳实践，可行性高、扩展性强、安全合规。后续可根据主网进展和社区反馈持续优化细节，确保NarrFlow成为Web3协作叙事领域的标杆项目。
 
-## 2024-04-21 近期开发进展与合约结构升级
+## 近期开发进展与合约结构升级
 
 ### 1. 前端依赖与Sui SDK适配
 - 清理并重装依赖，修正了 node_modules 缺失和类型声明报错。

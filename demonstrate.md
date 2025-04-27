@@ -161,7 +161,7 @@ classDiagram
     CoreModule --> TokenModule
 ```
 
-### 数据模型（2024-04-21最新结构）
+### 数据模型（最新结构）
 
 ```mermaid
 classDiagram
