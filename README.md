@@ -76,6 +76,11 @@ VITE_TREASURY_ID=
 VITE_SUI_NETWORK=testnet
 
 数据库
+
+VITE_SUPABASE_URL=
+VITE_SUPABASE_KEY=
+
+执行sql语句
 create table if not exists proposals (
   id bigserial primary key,
   content text not null,
@@ -92,8 +97,6 @@ create table if not exists votes (
   created_at timestamptz not null default now()
 );
 
-VITE_SUPABASE_URL=
-VITE_SUPABASE_KEY=
 
 # 后续添加 Walrus 相关 endpoint
 # VITE_WALRUS_PUBLISHER=
