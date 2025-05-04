@@ -28,7 +28,9 @@ module narr_flow::story {
 
     /// 初始化 StoryBook（只需一次，部署后调用）
     public entry fun init_story_book(ctx: &mut TxContext) {
-        let book = StoryBook { id: object::new(ctx), books: vector::empty<Book>(), current_book_index: 0 };
+        let book = StoryBook { id: object::new(ctx),
+            books: vector::empty<Book>(),
+            current_book_index: 0 };
         transfer::share_object(book);
     }
 

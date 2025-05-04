@@ -14,11 +14,12 @@ const MAX_BYTES = 2000;
 
 // VotingBook 组件：展示正在投票的书（链上集成预留接口）
 const VotingBook: React.FC = () => {
+  const { t } = useLang();
   // TODO: 替换为链上查询逻辑
   // 示例数据
   const [book, setBook] = useState<any>({
-    title: '区块链协作小说',
-    author: 'Sui 用户',
+    title: t('demo_book_title'),
+    author: t('demo_book_author'),
     paragraph_count: 5,
     total_votes: 8,
     status: 0,
@@ -27,11 +28,11 @@ const VotingBook: React.FC = () => {
   if (!book) return null;
   return (
     <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-2">正在投票的书：{book.title}</h2>
-      <p>作者：{book.author}</p>
-      <p>段落数：{book.paragraph_count}</p>
-      <p>总投票：{book.total_votes}</p>
-      <p>状态：{book.status === 0 ? '进行中' : '已归档'}</p>
+      <h2 className="text-2xl font-bold mb-2">{t('voting_book_title', { title: book.title })}</h2>
+      <p>{t('voting_book_author', { author: book.author })}</p>
+      <p>{t('voting_book_paragraph_count', { count: book.paragraph_count })}</p>
+      <p>{t('voting_book_total_votes', { votes: book.total_votes })}</p>
+      <p>{t('voting_book_status', { status: book.status === 0 ? t('create_status_ongoing') : t('create_status_archived') })}</p>
     </div>
   );
 };
@@ -224,6 +225,11 @@ const Home: React.FC = () => {
   // 作者地址缩略
   const authorShort = votingBook.author ? shortenAddress(votingBook.author) : '';
 
+  // 在Home组件内添加调试输出
+  useEffect(() => {
+    console.log('paragraphs:', paragraphs, 'totalPages:', totalPages, 'maxParagraphs:', maxParagraphs);
+  }, [paragraphs, totalPages, maxParagraphs]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
@@ -246,13 +252,13 @@ const Home: React.FC = () => {
               p-4 flex flex-col justify-between
             `}>
               <div>
-                <h2 className="text-white text-xl font-bold mb-2">当前协作故事</h2>
+                <h2 className="text-white text-xl font-bold mb-2">{t('book_title')}</h2>
                 <h3 className="text-amber-100 dark:text-gray-300 text-2xl font-serif mb-3">{votingBook.title}</h3>
                 <p className="text-amber-200 dark:text-gray-400 text-sm">
                   {t('book_authors', { count: collaborators })}
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  {t('book_progress', { current: paragraphs.length, max: votingBook.maxParagraphs })}
+                  {t('book_progress', { current: Array.isArray(paragraphs) ? paragraphs.length : 0, max: maxParagraphs })}
                 </p>
                 <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
                   {t('create_author')}：{authorShort}
@@ -266,7 +272,7 @@ const Home: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-amber-200 dark:text-gray-400 text-sm">
-                  {`Page ${pageIndex + 1} / ${totalPages}`}
+                  {t('book_page', { current: pageIndex + 1, total: totalPages })}
                 </span>
               </div>
             </div>
@@ -316,25 +322,25 @@ const Home: React.FC = () => {
                     {showSubmissionForm && (
                       <div className="mt-6 p-4 bg-amber-50 dark:bg-gray-800 rounded-lg">
                         <h4 className="text-lg font-medium text-amber-900 dark:text-amber-200 mb-2">
-                          {isEditingTitle ? '请输入新书标题' : '请输入新段落内容'}
+                          {isEditingTitle ? t('form_input_title') : t('form_input_paragraph')}
                         </h4>
                         <textarea
                           className="w-full p-2 border border-amber-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                           rows={3}
-                          placeholder={isEditingTitle ? '输入新书标题...' : '输入新段落内容...'}
+                          placeholder={isEditingTitle ? t('form_input_title_placeholder') : t('form_input_paragraph_placeholder')}
                           value={input}
                           onChange={handleInputChange}
                         ></textarea>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-sm text-amber-700 dark:text-amber-300">
-                            {`${inputBytes}/${MAX_BYTES} 字节`}
+                            {t('byte_count', { current: inputBytes, max: MAX_BYTES })}
                           </span>
                           <button
                             onClick={handleSubmit}
                             className="px-4 py-1 bg-amber-600 hover:bg-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 text-white rounded"
                             disabled={loading || !input.trim() || inputBytes > MAX_BYTES}
                           >
-                            {loading ? '提交中...' : isEditingTitle ? '提交书名' : '提交段落'}
+                            {loading ? t('form_submitting') : isEditingTitle ? t('form_submit_title') : t('form_submit_paragraph')}
                           </button>
                         </div>
                       </div>

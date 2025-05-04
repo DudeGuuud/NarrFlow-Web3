@@ -25,8 +25,8 @@ export const translations: { [key: string]: TranslationType } = {
     // 书本组件
     book_title: 'Current Collaborative Story',
     book_authors: 'Created by %count% authors',
-    book_progress: 'Current progress: %current%/%max% paragraphs',
-    book_page: 'Page %current% / %total%',
+    book_progress: 'Current progress: {current}/{max} paragraphs',
+    book_page: 'Page {current} / {total}',
     
     // 按钮
     btn_prev_page: '← Previous',
@@ -104,7 +104,21 @@ export const translations: { [key: string]: TranslationType } = {
     content: 'Content',
     proposal_pool: 'Proposal Pool',
     vote_count: 'Votes',
-    click_to_read: 'Click the cover to read this book'
+    click_to_read: 'Click the cover to read this book',
+    demo_book_title: 'Blockchain Collaborative Novel',
+    demo_book_author: 'Sui User',
+    voting_book_title: 'Voting Book: {title}',
+    voting_book_author: 'Author: {author}',
+    voting_book_paragraph_count: 'Paragraphs: {count}',
+    voting_book_total_votes: 'Total Votes: {votes}',
+    voting_book_status: 'Status: {status}',
+    form_input_title: 'Please enter the new book title',
+    form_input_paragraph: 'Please enter the new paragraph',
+    form_input_title_placeholder: 'Enter new book title...',
+    form_input_paragraph_placeholder: 'Enter new paragraph...',
+    form_submitting: 'Submitting...',
+    form_submit_title: 'Submit Title',
+    form_submit_paragraph: 'Submit Paragraph'
   },
   
   zh: {
@@ -121,8 +135,8 @@ export const translations: { [key: string]: TranslationType } = {
     // 书本组件
     book_title: '当前协作故事',
     book_authors: '由 %count% 位作者共同创作',
-    book_progress: '当前进度: %current%/%max% 段',
-    book_page: '第 %current% 页 / 共 %total% 页',
+    book_progress: '当前进度: {current}/{max} 段',
+    book_page: '第 {current} 页 / 共 {total} 页',
     
     // 按钮
     btn_prev_page: '← 上一页',
@@ -200,6 +214,20 @@ export const translations: { [key: string]: TranslationType } = {
     content: '内容',
     proposal_pool: '候选提案池',
     vote_count: '投票数',
-    click_to_read: '点击封面翻阅此书'
+    click_to_read: '点击封面翻阅此书',
+    demo_book_title: '区块链协作小说',
+    demo_book_author: 'Sui 用户',
+    voting_book_title: '正在投票的书：{title}',
+    voting_book_author: '作者：{author}',
+    voting_book_paragraph_count: '段落数：{count}',
+    voting_book_total_votes: '总投票：{votes}',
+    voting_book_status: '状态：{status}',
+    form_input_title: '请输入新书标题',
+    form_input_paragraph: '请输入新段落内容',
+    form_input_title_placeholder: '输入新书标题...',
+    form_input_paragraph_placeholder: '输入新段落内容...',
+    form_submitting: '提交中...',
+    form_submit_title: '提交书名',
+    form_submit_paragraph: '提交段落'
   }
 }; 

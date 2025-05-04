@@ -3,11 +3,11 @@ import { Transaction } from '@mysten/sui/transactions';
 import { useWallet } from '@suiet/wallet-kit';
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
 // TODO: 替换为你刚刚发布成功的 PACKAGE_ID 和 StoryBook 对象ID
-const PACKAGE_ID = '0xa47599a6525da242f712bec2601dceab88f4785c6f549bb412eee30f15ed623d';
-const STORYBOOK_ID = '0x67cea7bae77db8331e56858125809f578d46b17156e8ad5aaf5bb44a3bea416d';
-const TREASURY_ID = '0xffca3c14c8273a07dccdd84b3c35529ad796063814eb031d2cdd6b66b6b079e9'; // TODO: 替换为你的Treasury对象ID
+const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID;
+const STORYBOOK_ID = import.meta.env.VITE_STORYBOOK_ID;
+const TREASURY_ID = import.meta.env.VITE_TREASURY_ID;
 // 切换为 testnet
-const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+const suiClient = new SuiClient({ url: getFullnodeUrl(import.meta.env.VITE_SUI_NETWORK) });
 // Walrus 官方 Testnet 节点（已弃用，保留注释）
 // const WALRUS_PUBLISHER = 'https://publisher.walrus-testnet.walrus.space';
 // const WALRUS_AGGREGATOR = 'https://aggregator.walrus-testnet.walrus.space';
