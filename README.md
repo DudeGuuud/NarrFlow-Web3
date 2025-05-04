@@ -75,7 +75,23 @@ VITE_STORYBOOK_ID=
 VITE_TREASURY_ID=
 VITE_SUI_NETWORK=testnet
 
-#数据库
+数据库
+create table if not exists proposals (
+  id bigserial primary key,
+  content text not null,
+  author text not null,
+  votes integer not null default 0,
+  type text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists votes (
+  id bigserial primary key,
+  proposal_id bigint not null references proposals(id) on delete cascade,
+  voter text not null,
+  created_at timestamptz not null default now()
+);
+
 VITE_SUPABASE_URL=
 VITE_SUPABASE_KEY=
 
