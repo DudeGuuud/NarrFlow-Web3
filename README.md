@@ -67,6 +67,19 @@ pnpm run dev
 # 构建生产版本
 pnpm run build
 ```
+###投票池（根目录添加.env并写入）
+VITE_PACKAGE_ID=
+VITE_STORYBOOK_ID=
+VITE_TREASURY_ID=
+VITE_SUI_NETWORK=testnet
+
+#数据库
+VITE_SUPABASE_URL=
+VITE_SUPABASE_KEY=
+
+# 后续添加 Walrus 相关 endpoint
+# VITE_WALRUS_PUBLISHER=
+# VITE_WALRUS_AGGREGATOR=
 
 ### 智能合约
 ```bash
