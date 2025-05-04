@@ -68,7 +68,7 @@ pnpm run dev
 pnpm run build
 ```
 
-###投票池（根目录添加.env并写入）
+根目录添加.env并填写
 ```bash
 VITE_PACKAGE_ID=
 VITE_STORYBOOK_ID=
