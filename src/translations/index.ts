@@ -118,7 +118,11 @@ export const translations: { [key: string]: TranslationType } = {
     form_input_paragraph_placeholder: 'Enter new paragraph...',
     form_submitting: 'Submitting...',
     form_submit_title: 'Submit Title',
-    form_submit_paragraph: 'Submit Paragraph'
+    form_submit_paragraph: 'Submit Paragraph',
+    已归档的书: 'Archived Book',
+    暂无归档书: 'No archived books yet',
+    暂无段落: 'No paragraphs yet',
+    返回: 'Back'
   },
   
   zh: {
@@ -228,6 +232,10 @@ export const translations: { [key: string]: TranslationType } = {
     form_input_paragraph_placeholder: '输入新段落内容...',
     form_submitting: '提交中...',
     form_submit_title: '提交书名',
-    form_submit_paragraph: '提交段落'
+    form_submit_paragraph: '提交段落',
+    已归档的书: '已归档的书',
+    暂无归档书: '暂无归档书',
+    暂无段落: '暂无段落',
+    返回: '返回'
   }
 }; 
