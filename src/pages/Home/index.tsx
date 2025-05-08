@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FadeIn, SlideUp } from '../../components/animations';
+import { FadeIn, SlideUp, BookAnimation } from '../../components/animations';
 import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
 import { replaceParams } from '../../utils/langUtils';
@@ -242,52 +242,86 @@ const Home: React.FC = () => {
             {t('app_description')}
           </p>
         </FadeIn>
-        {/* 书本组件（模板样式） */}
-        <div className="relative max-w-4xl mx-auto mb-8">
-          <div className={`w-full rounded-lg shadow-2xl overflow-hidden ${isMobile ? 'flex flex-col' : 'flex aspect-[2/1.2]'}`}>
+        {/* 书本组件（增强样式） */}
+        <BookAnimation className="relative max-w-4xl mx-auto mb-12">
+          <div className={`w-full rounded-xl shadow-book hover:shadow-book-hover transition-all duration-500 overflow-hidden ${isMobile ? 'flex flex-col' : 'flex aspect-[2/1.2]'}`}>
             {/* 书本封面 - 左侧或顶部（移动设备） */}
             <div className={`
               ${isMobile ? 'w-full py-4' : 'w-1/2 h-full'}
-              bg-gradient-to-r from-amber-900 to-amber-700 dark:from-gray-700 dark:to-gray-600
-              p-4 flex flex-col justify-between
+              bg-gradient-to-br from-amber-900 via-amber-800 to-amber-700 dark:from-gray-800 dark:via-gray-900 dark:to-gray-700
+              p-6 flex flex-col justify-between
+              border-r border-amber-700/30 dark:border-gray-900/50
+              shadow-inner
             `}>
               <div>
-                <h2 className="text-white text-xl font-bold mb-2">{t('book_title')}</h2>
-                <h3 className="text-amber-100 dark:text-gray-300 text-2xl font-serif mb-3">{votingBook.title}</h3>
-                <p className="text-amber-200 dark:text-gray-400 text-sm">
-                  {t('book_authors', { count: collaborators })}
-                </p>
-                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  {t('book_progress', { current: Array.isArray(paragraphs) ? paragraphs.length : 0, max: maxParagraphs })}
-                </p>
-                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  {t('create_author')}：{authorShort}
-                </p>
-                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  {t('create_total_votes')}：{totalVotes}
-                </p>
-                <p className="text-amber-200 dark:text-gray-400 mt-1 text-sm">
-                  {t('create_status')}：{votingBook.status === 0 ? t('create_status_ongoing') : t('create_status_archived')}
-                </p>
+                <div className="mb-4 flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center mr-3">
+                    <span className="text-amber-500 dark:text-amber-300 text-xl font-serif">📖</span>
+                  </div>
+                  <h2 className="text-white dark:text-amber-100 text-xl font-title tracking-wide">{t('book_title')}</h2>
+                </div>
+
+                <h3 className="text-white dark:text-gray-200 text-2xl font-serif mb-4 border-b border-amber-200/20 pb-3">{votingBook.title}</h3>
+
+                <div className="space-y-2.5">
+                  <p className="text-white dark:text-gray-300 text-sm font-medium flex items-center">
+                    <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">👥</span>
+                    {t('book_authors', { count: collaborators })}
+                  </p>
+
+                  <p className="text-white dark:text-gray-300 text-sm font-medium flex items-center">
+                    <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">📝</span>
+                    {t('book_progress', { current: Array.isArray(paragraphs) ? paragraphs.length : 0, max: maxParagraphs })}
+                  </p>
+
+                  <p className="text-white dark:text-gray-300 text-sm font-medium flex items-center">
+                    <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">✍️</span>
+                    {t('create_author')}：{authorShort}
+                  </p>
+
+                  <p className="text-white dark:text-gray-300 text-sm font-medium flex items-center">
+                    <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">👍</span>
+                    {t('create_total_votes')}：{totalVotes}
+                  </p>
+
+                  <p className="text-white dark:text-gray-300 text-sm font-medium flex items-center">
+                    <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">📊</span>
+                    {t('create_status')}：
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                      votingBook.status === 0
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                    }`}>
+                      {votingBook.status === 0 ? t('create_status_ongoing') : t('create_status_archived')}
+                    </span>
+                  </p>
+                </div>
               </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-amber-200 dark:text-gray-400 text-sm">
+              <div className="flex justify-between items-center mt-4 pt-3 border-t border-amber-200/20">
+                <span className="text-white dark:text-gray-300 text-sm font-medium">
                   {t('book_page', { current: pageIndex + 1, total: totalPages })}
                 </span>
+                <div className="text-white dark:text-gray-300 text-xs opacity-70">
+                  NarrFlow © 2024
+                </div>
               </div>
             </div>
             {/* 书页内容 - 右侧或底部（移动设备） */}
             <div className={`
               ${isMobile ? 'w-full' : 'w-1/2'}
               ${isMobile ? 'h-[calc(100vh-300px)]' : 'h-full'}
-              bg-white dark:bg-gray-900 p-0 relative perspective-[1500px] overflow-hidden
+              bg-amber-50 dark:bg-gray-900 p-0 relative perspective-[1500px] overflow-hidden
             `}>
               <AnimatePresence initial={false} custom={direction} mode="wait">
                 <motion.div
                   key={pageIndex}
-                  className="absolute top-0 left-0 w-full h-full bg-white dark:bg-gray-900 p-5 flex flex-col justify-between origin-[left_center]"
-                  style={{ transformStyle: "preserve-3d" }}
+                  className="absolute top-0 left-0 w-full h-full bg-amber-50 dark:bg-gray-900 p-6 flex flex-col justify-between origin-[left_center]"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    background: "#FFF8E7",
+                    boxShadow: "inset 0 0 30px rgba(0,0,0,0.05)"
+                  }}
                   custom={direction}
                   variants={pageVariants}
                   initial="enter"
@@ -295,82 +329,103 @@ const Home: React.FC = () => {
                   exit="exit"
                   transition={pageTransition}
                 >
-                  <div className="prose dark:prose-invert max-w-none overflow-y-auto h-[calc(100%-50px)] pb-4">
+                  <div className="prose dark:prose-invert max-w-none overflow-y-auto h-[calc(100%-50px)] pb-4 scrollbar-hide">
+                    {/* 页码装饰 */}
+                    <div className="absolute top-3 right-4 text-xs font-serif text-gray-400 dark:text-gray-500">
+                      {pageIndex + 1}
+                    </div>
+
                     {/* 段落内容（链上数据） */}
                     {currentPageParagraphs.map((paragraph, idx) => (
-                      <div
+                      <motion.div
                         key={idx}
-                        className={`${isMobile ? 'mb-5' : 'mb-8'} last:mb-4`}
+                        className={`${isMobile ? 'mb-6' : 'mb-10'} last:mb-4`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1, duration: 0.5 }}
                       >
                         <p className={
                           `${isMobile ? 'text-base' : 'text-lg'}
-                          leading-relaxed font-serif mb-1 pl-6 first-letter:text-xl first-letter:font-bold`
+                          leading-relaxed font-serif mb-2 pl-6 first-letter:text-2xl first-letter:font-bold
+                          first-letter:text-primary-700 dark:first-letter:text-primary-400
+                          text-gray-900 dark:text-gray-200`
                         }>
                           {paragraph.content ? decompressFromBase64(paragraph.content) : paragraph.walrus_id}
                         </p>
-                        <div className="flex justify-end items-center mt-0.5 text-xs text-gray-400 dark:text-gray-500 opacity-70">
-                          <span className="mr-3 italic">—— {paragraph.author}</span>
-                          <span className="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="flex justify-end items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          <span className="mr-3 italic font-handwriting text-sm">—— {paragraph.author}</span>
+                          <span className="flex items-center bg-amber-50 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                             </svg>
-                            {paragraph.votes}
+                            <span className="font-medium text-amber-700 dark:text-amber-300">{paragraph.votes}</span>
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
 
                     {/* 如果是最后一页且段落未满10段，显示提交表单 */}
                     {showSubmissionForm && (
-                      <div className="mt-6 p-4 bg-amber-50 dark:bg-gray-800 rounded-lg">
-                        <h4 className="text-lg font-medium text-amber-900 dark:text-amber-200 mb-2">
+                      <motion.div
+                        className="mt-8 p-5 bg-white/80 dark:bg-gray-800/90 rounded-lg border border-amber-200 dark:border-gray-700 shadow-md"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <h4 className="text-lg font-serif font-medium text-amber-900 dark:text-amber-200 mb-3 flex items-center">
+                          <span className="w-6 h-6 inline-flex items-center justify-center mr-2 bg-amber-100 dark:bg-amber-900 rounded-full text-amber-700 dark:text-amber-300">
+                            ✍️
+                          </span>
                           {isEditingTitle ? t('form_input_title') : t('form_input_paragraph')}
                         </h4>
                         <textarea
-                          className="w-full p-2 border border-amber-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+                          className="w-full p-3 border border-amber-200 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-700 focus:border-transparent transition-all duration-200"
                           rows={3}
                           placeholder={isEditingTitle ? t('form_input_title_placeholder') : t('form_input_paragraph_placeholder')}
                           value={input}
                           onChange={handleInputChange}
                         ></textarea>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-sm text-amber-700 dark:text-amber-300">
+                        <div className="flex justify-between items-center mt-3">
+                          <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">
                             {t('byte_count', { current: inputBytes, max: MAX_BYTES })}
                           </span>
                           <button
                             onClick={handleSubmit}
-                            className="px-4 py-1 bg-amber-600 hover:bg-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 text-white rounded"
+                            className={`px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 dark:from-amber-700 dark:to-amber-800 dark:hover:from-amber-600 dark:hover:to-amber-700 text-white rounded-md shadow-sm transition-all duration-200 flex items-center ${
+                              loading || !input.trim() || inputBytes > MAX_BYTES ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                            }`}
                             disabled={loading || !input.trim() || inputBytes > MAX_BYTES}
                           >
+                            <span className="mr-1">{loading ? '⏳' : '✨'}</span>
                             {loading ? t('form_submitting') : isEditingTitle ? t('form_submit_title') : t('form_submit_paragraph')}
                           </button>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
 
-                  <div className="flex justify-between mt-2">
+                  <div className="flex justify-between mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
                     <button
                       onClick={goToPrevPage}
                       disabled={pageIndex === 0 || flipping}
-                      className={`p-2 rounded-full ${
+                      className={`px-4 py-1.5 rounded-md flex items-center transition-all duration-200 ${
                         pageIndex === 0 || flipping
                           ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-gray-800'
+                          : 'text-primary-600 hover:bg-primary-50 hover:shadow-sm dark:text-primary-400 dark:hover:bg-gray-800'
                       }`}
                     >
-                      {t('btn_prev_page')}
+                      <span className="mr-1">←</span> {t('btn_prev_page')}
                     </button>
                     <button
                       onClick={goToNextPage}
                       disabled={pageIndex === totalPages - 1 || flipping}
-                      className={`p-2 rounded-full ${
+                      className={`px-4 py-1.5 rounded-md flex items-center transition-all duration-200 ${
                         pageIndex === totalPages - 1 || flipping
                           ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-gray-800'
+                          : 'text-primary-600 hover:bg-primary-50 hover:shadow-sm dark:text-primary-400 dark:hover:bg-gray-800'
                       }`}
                     >
-                      {t('btn_next_page')}
+                      {t('btn_next_page')} <span className="ml-1">→</span>
                     </button>
                   </div>
                 </motion.div>
@@ -381,55 +436,84 @@ const Home: React.FC = () => {
                 <div
                   className={`absolute inset-0 pointer-events-none ${
                     direction > 0
-                      ? 'bg-gradient-to-l from-black/10 to-transparent'
-                      : 'bg-gradient-to-r from-black/10 to-transparent'
+                      ? 'bg-gradient-to-l from-black/15 to-transparent'
+                      : 'bg-gradient-to-r from-black/15 to-transparent'
                   }`}
                 />
               )}
+
+              {/* 书页卷曲效果 - 使用CSS渐变代替图片 */}
+              <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-amber-200/30 to-transparent rounded-tl-full pointer-events-none"></div>
             </div>
           </div>
+
           {/* 书本阴影 */}
-          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-[90%] h-6 bg-black/20 dark:bg-black/40 filter blur-md rounded-full"></div>
-        </div>
-        {/* 操作卡片 */}
-        <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 gap-6'} max-w-4xl mx-auto`}>
-          <SlideUp delay={0.2}>
+          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-[85%] h-8 bg-black/20 dark:bg-black/40 filter blur-lg rounded-full animate-pulse-soft"></div>
+        </BookAnimation>
+        {/* 操作卡片 - 增强版 */}
+        <div className={`grid grid-cols-1 ${isMobile ? 'gap-6' : 'md:grid-cols-2 gap-8'} max-w-4xl mx-auto mt-8`}>
+          <SlideUp delay={0.3} hover={true}>
             <Link
               to="/create"
-              className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1 transition-transform duration-300"
+              className="group block p-7 bg-white dark:bg-gray-800 rounded-xl shadow-card-elegant hover:shadow-book-hover border border-primary-100 dark:border-gray-700 transition-all duration-500 overflow-hidden relative"
             >
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-xl text-primary-600 dark:text-primary-300">
-                  ✍️
+              {/* 闪光效果 */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1500 ease-in-out"></div>
+
+              <div className="flex items-center mb-5">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 dark:from-primary-600 dark:to-primary-800 flex items-center justify-center text-xl text-white shadow-md group-hover:scale-110 transition-transform duration-500">
+                  <span className="animate-float">✍️</span>
                 </div>
-                <h2 className="text-2xl font-semibold text-primary-800 dark:text-primary-200 ml-4">
+                <h2 className="text-2xl font-title font-semibold text-primary-800 dark:text-primary-200 ml-4 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors duration-300">
                   {t('create_card_title')}
                 </h2>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-400 font-serif leading-relaxed group-hover:text-gray-800 dark:group-hover:text-gray-300 transition-colors duration-300">
                 {t('create_card_desc')}
               </p>
+
+              {/* 卡片底部装饰 */}
+              <div className="mt-4 pt-3 border-t border-primary-100 dark:border-gray-700 flex justify-end">
+                <span className="text-primary-500 dark:text-primary-400 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 -translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  {t('card_action_start')} <span className="ml-1">→</span>
+                </span>
+              </div>
             </Link>
           </SlideUp>
 
-          <SlideUp delay={0.4}>
+          <SlideUp delay={0.5} hover={true}>
             <Link
               to="/story/latest"
-              className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1 transition-transform duration-300"
+              className="group block p-7 bg-white dark:bg-gray-800 rounded-xl shadow-card-elegant hover:shadow-book-hover border border-secondary-100 dark:border-gray-700 transition-all duration-500 overflow-hidden relative"
             >
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-secondary-100 dark:bg-secondary-900 flex items-center justify-center text-xl text-secondary-600 dark:text-secondary-300">
-                  📚
+              {/* 闪光效果 */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1500 ease-in-out"></div>
+
+              <div className="flex items-center mb-5">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-secondary-400 to-secondary-600 dark:from-secondary-600 dark:to-secondary-800 flex items-center justify-center text-xl text-white shadow-md group-hover:scale-110 transition-transform duration-500">
+                  <span className="animate-float">📚</span>
                 </div>
-                <h2 className="text-2xl font-semibold text-primary-800 dark:text-primary-200 ml-4">
+                <h2 className="text-2xl font-title font-semibold text-secondary-800 dark:text-secondary-200 ml-4 group-hover:text-secondary-600 dark:group-hover:text-secondary-300 transition-colors duration-300">
                   {t('browse_card_title')}
                 </h2>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-400 font-serif leading-relaxed group-hover:text-gray-800 dark:group-hover:text-gray-300 transition-colors duration-300">
                 {t('browse_card_desc')}
               </p>
+
+              {/* 卡片底部装饰 */}
+              <div className="mt-4 pt-3 border-t border-secondary-100 dark:border-gray-700 flex justify-end">
+                <span className="text-secondary-500 dark:text-secondary-400 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 -translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  {t('card_action_browse')} <span className="ml-1">→</span>
+                </span>
+              </div>
             </Link>
           </SlideUp>
+        </div>
+
+        {/* 页脚装饰 */}
+        <div className="text-center mt-12 mb-6 text-gray-500 dark:text-gray-400 text-sm font-serif">
+          <p>NarrFlow — {t('footer_tagline')}</p>
         </div>
       </div>
     </div>

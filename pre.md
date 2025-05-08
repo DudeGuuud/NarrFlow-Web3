@@ -38,5 +38,3 @@ book_ref.status 变为“已存档”，重置当前活跃图书索引
 为了防止公共对象引发的安全问题，签名交易的逻辑将在后端的私有合约和账户中执行。
 为了减少存储的Gas费用，未来会将文章转换为电子文档并存储在Walrus中。
 为了防止用户恶意提交offensive的内容，将结合审核机制，确保Narr Flow创作的质量。
-
-At dawn, the boy was found in the snowy corner, his body still, a faint smile on his lips. Burnt matches lay scattered around him. Passersby shook their heads, assuming he’d frozen in the night. They didn’t know he’d found warmth and love, soaring to a place beyond suffering.
