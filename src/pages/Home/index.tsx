@@ -231,14 +231,14 @@ const Home: React.FC = () => {
   }, [paragraphs, totalPages, maxParagraphs]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 via-white to-primary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 bg-paper-texture">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
-        <FadeIn>
-          <h1 className="text-4xl font-bold text-primary-900 dark:text-primary-100 mb-2 text-center">
+      <div className="container mx-auto px-4 py-8">
+        <FadeIn direction="up" duration={0.7}>
+          <h1 className="text-5xl font-title font-bold text-primary-800 dark:text-primary-100 mb-3 text-center tracking-wide">
             {t('app_name')}
           </h1>
-          <p className={`${isMobile ? 'text-lg mb-4' : 'text-xl mb-10'} text-gray-700 dark:text-gray-300 text-center`}>
+          <p className={`${isMobile ? 'text-lg mb-6' : 'text-xl mb-12'} font-serif text-gray-700 dark:text-gray-300 text-center max-w-3xl mx-auto leading-relaxed`}>
             {t('app_description')}
           </p>
         </FadeIn>
@@ -247,8 +247,8 @@ const Home: React.FC = () => {
           <div className={`w-full rounded-lg shadow-2xl overflow-hidden ${isMobile ? 'flex flex-col' : 'flex aspect-[2/1.2]'}`}>
             {/* 书本封面 - 左侧或顶部（移动设备） */}
             <div className={`
-              ${isMobile ? 'w-full py-4' : 'w-1/2 h-full'} 
-              bg-gradient-to-r from-amber-900 to-amber-700 dark:from-gray-700 dark:to-gray-600 
+              ${isMobile ? 'w-full py-4' : 'w-1/2 h-full'}
+              bg-gradient-to-r from-amber-900 to-amber-700 dark:from-gray-700 dark:to-gray-600
               p-4 flex flex-col justify-between
             `}>
               <div>
@@ -270,6 +270,7 @@ const Home: React.FC = () => {
                   {t('create_status')}：{votingBook.status === 0 ? t('create_status_ongoing') : t('create_status_archived')}
                 </p>
               </div>
+
               <div className="flex justify-between items-center">
                 <span className="text-amber-200 dark:text-gray-400 text-sm">
                   {t('book_page', { current: pageIndex + 1, total: totalPages })}
@@ -278,8 +279,8 @@ const Home: React.FC = () => {
             </div>
             {/* 书页内容 - 右侧或底部（移动设备） */}
             <div className={`
-              ${isMobile ? 'w-full' : 'w-1/2'} 
-              ${isMobile ? 'h-[calc(100vh-300px)]' : 'h-full'} 
+              ${isMobile ? 'w-full' : 'w-1/2'}
+              ${isMobile ? 'h-[calc(100vh-300px)]' : 'h-full'}
               bg-white dark:bg-gray-900 p-0 relative perspective-[1500px] overflow-hidden
             `}>
               <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -297,12 +298,12 @@ const Home: React.FC = () => {
                   <div className="prose dark:prose-invert max-w-none overflow-y-auto h-[calc(100%-50px)] pb-4">
                     {/* 段落内容（链上数据） */}
                     {currentPageParagraphs.map((paragraph, idx) => (
-                      <div 
-                        key={idx} 
+                      <div
+                        key={idx}
                         className={`${isMobile ? 'mb-5' : 'mb-8'} last:mb-4`}
                       >
                         <p className={
-                          `${isMobile ? 'text-base' : 'text-lg'} 
+                          `${isMobile ? 'text-base' : 'text-lg'}
                           leading-relaxed font-serif mb-1 pl-6 first-letter:text-xl first-letter:font-bold`
                         }>
                           {paragraph.content ? decompressFromBase64(paragraph.content) : paragraph.walrus_id}
@@ -318,6 +319,7 @@ const Home: React.FC = () => {
                         </div>
                       </div>
                     ))}
+
                     {/* 如果是最后一页且段落未满10段，显示提交表单 */}
                     {showSubmissionForm && (
                       <div className="mt-6 p-4 bg-amber-50 dark:bg-gray-800 rounded-lg">
@@ -346,24 +348,25 @@ const Home: React.FC = () => {
                       </div>
                     )}
                   </div>
+
                   <div className="flex justify-between mt-2">
-                    <button 
+                    <button
                       onClick={goToPrevPage}
                       disabled={pageIndex === 0 || flipping}
                       className={`p-2 rounded-full ${
                         pageIndex === 0 || flipping
-                          ? 'text-gray-400 cursor-not-allowed' 
+                          ? 'text-gray-400 cursor-not-allowed'
                           : 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-gray-800'
                       }`}
                     >
                       {t('btn_prev_page')}
                     </button>
-                    <button 
+                    <button
                       onClick={goToNextPage}
                       disabled={pageIndex === totalPages - 1 || flipping}
                       className={`p-2 rounded-full ${
                         pageIndex === totalPages - 1 || flipping
-                          ? 'text-gray-400 cursor-not-allowed' 
+                          ? 'text-gray-400 cursor-not-allowed'
                           : 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-gray-800'
                       }`}
                     >
@@ -372,12 +375,13 @@ const Home: React.FC = () => {
                   </div>
                 </motion.div>
               </AnimatePresence>
+
               {/* 翻页时的阴影效果 */}
               {flipping && (
-                <div 
+                <div
                   className={`absolute inset-0 pointer-events-none ${
-                    direction > 0 
-                      ? 'bg-gradient-to-l from-black/10 to-transparent' 
+                    direction > 0
+                      ? 'bg-gradient-to-l from-black/10 to-transparent'
                       : 'bg-gradient-to-r from-black/10 to-transparent'
                   }`}
                 />
@@ -390,8 +394,8 @@ const Home: React.FC = () => {
         {/* 操作卡片 */}
         <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 gap-6'} max-w-4xl mx-auto`}>
           <SlideUp delay={0.2}>
-            <Link 
-              to="/create" 
+            <Link
+              to="/create"
               className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1 transition-transform duration-300"
             >
               <div className="flex items-center mb-4">
@@ -407,9 +411,10 @@ const Home: React.FC = () => {
               </p>
             </Link>
           </SlideUp>
+
           <SlideUp delay={0.4}>
-            <Link 
-              to="/story/latest" 
+            <Link
+              to="/story/latest"
               className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1 transition-transform duration-300"
             >
               <div className="flex items-center mb-4">
