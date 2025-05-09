@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { useSuiStory } from '../../hooks/useSuiStory';
 import { useLang } from '../../contexts/lang/LangContext';
 import Navbar from '../../components/layout/Navbar';
 

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { useSuiStory } from '../../hooks/useSuiStory';
 import { FaThumbsUp } from 'react-icons/fa';
 import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
 import { shortenAddress } from '../../utils/langUtils';
-import { useWallet } from '@suiet/wallet-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 import { supabase } from '../../lib/supabaseClient';
 
 const MAX_BYTES = 2000;
@@ -20,7 +20,7 @@ const CreatePage: React.FC = () => {
     addParagraphAndArchive,
   } = useSuiStory();
   const { lang, t } = useLang();
-  const { account } = useWallet();
+  const account = useCurrentAccount();
   const VOTE_THRESHOLD = 2; // 获胜阈值，1票自动上链
 
   const [book, setBook] = useState<any>(null);

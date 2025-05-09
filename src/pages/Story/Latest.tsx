@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../../components/layout/Navbar';
-import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { useSuiStory } from '../../hooks/useSuiStory';
 import { useLang } from '../../contexts/lang/LangContext';
 import { shortenAddress } from '../../utils/langUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -97,4 +97,4 @@ const LatestStory: React.FC = () => {
   );
 };
 
-export default LatestStory; 
+export default LatestStory;

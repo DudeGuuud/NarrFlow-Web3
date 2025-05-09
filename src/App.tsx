@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useSuiStory } from './hooks/useSuiStoryWithWalrus';
-import { useWallet, ConnectButton } from '@suiet/wallet-kit';
+import { useSuiStory } from './hooks/useSuiStory';
+import { ConnectButton, useCurrentAccount } from '@mysten/dapp-kit';
 import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Story from './pages/Story';

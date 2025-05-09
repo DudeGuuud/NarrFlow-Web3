@@ -4,8 +4,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLang } from '../../contexts/lang/LangContext';
 import { isMobileDevice } from '../../utils/deviceUtils';
 import { Globe, Sun, Moon, Menu, X, Check } from 'lucide-react';
-import { ConnectButton } from '@suiet/wallet-kit';
-import '@suiet/wallet-kit/style.css';
+import { ConnectButton } from '@mysten/dapp-kit';
 
 // 导航链接配置
 const LINKS = [
@@ -22,9 +21,9 @@ const LANGUAGES = [
 ];
 
 // NavLink 组件
-const NavLink = ({ children, to, className, onClick }: { 
-  children: React.ReactNode; 
-  to: string; 
+const NavLink = ({ children, to, className, onClick }: {
+  children: React.ReactNode;
+  to: string;
   className: (props: { isActive: boolean }) => string;
   onClick?: () => void;
 }) => {
@@ -50,10 +49,10 @@ const Navbar: React.FC = () => {
     const checkDevice = () => {
       setIsMobile(isMobileDevice());
     };
-    
+
     checkDevice();
     window.addEventListener('resize', checkDevice);
-    
+
     return () => {
       window.removeEventListener('resize', checkDevice);
     };
@@ -81,11 +80,11 @@ const Navbar: React.FC = () => {
         setLangMenuOpen(false);
       }
     };
-    
+
     if (langMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -103,9 +102,9 @@ const Navbar: React.FC = () => {
           <ul className="flex space-x-4">
             {LINKS.map((link) => (
               <li key={link.to}>
-                <NavLink 
-                  to={link.to} 
-                  className={({ isActive }) => isActive 
+                <NavLink
+                  to={link.to}
+                  className={({ isActive }) => isActive
                     ? `text-sm font-medium ${theme === 'dark' ? 'text-primary-300' : 'text-primary-600'} nav-link`
                     : `text-sm ${theme === 'dark' ? 'text-gray-300 hover:text-primary-300' : 'text-gray-600 hover:text-primary-600'} nav-link`
                   }
@@ -137,7 +136,7 @@ const Navbar: React.FC = () => {
               <span>{lang === 'en' ? 'EN' : '中文'}</span>
             </button>
             {langMenuOpen && (
-              <div 
+              <div
                 className="absolute top-full right-0 w-24 py-1 mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700 menu-transition open animate-slideDown"
                 role="menu"
               >

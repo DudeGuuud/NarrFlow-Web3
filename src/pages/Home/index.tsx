@@ -6,7 +6,7 @@ import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
 import { replaceParams } from '../../utils/langUtils';
 import { isMobileDevice } from '../../utils/deviceUtils';
-import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { useSuiStory } from '../../hooks/useSuiStory';
 import { shortenAddress } from '../../utils/langUtils';
 import { decompressFromBase64 } from 'lz-string';
 

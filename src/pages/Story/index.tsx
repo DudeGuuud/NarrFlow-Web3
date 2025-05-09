@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FadeIn } from '../../components/animations';
 import Navbar from '../../components/layout/Navbar';
-import { useSuiStory } from '../../hooks/useSuiStoryWithWalrus';
+import { useSuiStory } from '../../hooks/useSuiStory';
 import { useLang } from '../../contexts/lang/LangContext';
 import { useNavigate } from 'react-router-dom';
 import { shortenAddress } from '../../utils/langUtils';
