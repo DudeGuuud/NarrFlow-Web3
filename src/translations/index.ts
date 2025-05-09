@@ -29,8 +29,8 @@ export const translations: { [key: string]: TranslationType } = {
     book_page: 'Page {current} / {total}',
 
     // 按钮
-    btn_prev_page: '← Previous',
-    btn_next_page: 'Next →',
+    btn_prev_page: 'Previous',
+    btn_next_page: 'Next',
     btn_submit: 'Submit',
     btn_connect_wallet: 'CONNECT WALLET',
 
@@ -54,7 +54,7 @@ export const translations: { [key: string]: TranslationType } = {
     card_action_browse: 'Browse Now',
 
     // 页脚
-    footer_tagline: 'Collaborative Storytelling on the Blockchain',
+    footer_tagline: 'Collaborative Storytelling on Sui',
 
     create_book_title: 'Collaborative Book Title',
     create_book_index: 'Book #{index}',

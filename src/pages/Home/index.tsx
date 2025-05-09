@@ -303,7 +303,7 @@ const Home: React.FC = () => {
                   {t('book_page', { current: pageIndex + 1, total: totalPages })}
                 </span>
                 <div className="text-white dark:text-gray-300 text-xs opacity-70">
-                  NarrFlow © 2024
+                  NarrFlow © 2025
                 </div>
               </div>
             </div>
