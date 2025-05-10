@@ -12,27 +12,46 @@ import { decompressFromBase64 } from 'lz-string';
 
 const MAX_BYTES = 2000;
 
-// VotingBook 组件：展示正在投票的书（链上集成预留接口）
-const VotingBook: React.FC = () => {
+// VotingBook 组件：展示正在投票的书（链上集成）
+const VotingBook: React.FC<{ book: any }> = ({ book }) => {
   const { t } = useLang();
-  // TODO: 替换为链上查询逻辑
-  // 示例数据
-  const [book, setBook] = useState<any>({
-    title: t('demo_book_title'),
-    author: t('demo_book_author'),
-    paragraph_count: 5,
-    total_votes: 8,
-    status: 0,
-  });
-  // 可根据链上 currentBookId 判断是否有正在投票的书
+
   if (!book) return null;
+
+  // 计算作者地址缩略形式
+  const shortenedAuthor = shortenAddress(book.author);
+
+  // 计算段落数量
+  const paragraphCount = Array.isArray(book.paragraphs) ? book.paragraphs.length : 0;
+
+  // 计算总投票数
+  const totalVotes = Array.isArray(book.paragraphs)
+    ? book.paragraphs.reduce((sum: number, p: any) => sum + (Number(p.votes) || 0), 0)
+    : 0;
+
   return (
-    <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-2">{t('voting_book_title', { title: book.title })}</h2>
-      <p>{t('voting_book_author', { author: book.author })}</p>
-      <p>{t('voting_book_paragraph_count', { count: book.paragraph_count })}</p>
-      <p>{t('voting_book_total_votes', { votes: book.total_votes })}</p>
-      <p>{t('voting_book_status', { status: book.status === 0 ? t('create_status_ongoing') : t('create_status_archived') })}</p>
+    <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-primary-100 dark:border-gray-700">
+      <h2 className="text-2xl font-bold mb-2 text-primary-800 dark:text-primary-200">
+        {t('voting_book_title', { title: book.title || t('demo_book_title') })}
+      </h2>
+      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">✍️</span>
+        {t('voting_book_author', { author: shortenedAuthor })}
+      </p>
+      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">📝</span>
+        {t('voting_book_paragraph_count', { count: paragraphCount })}
+      </p>
+      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">👍</span>
+        {t('voting_book_total_votes', { votes: totalVotes })}
+      </p>
+      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">📊</span>
+        {t('voting_book_status', {
+          status: book.status === 0 ? t('create_status_ongoing') : t('create_status_archived')
+        })}
+      </p>
     </div>
   );
 };
@@ -350,15 +369,29 @@ const Home: React.FC = () => {
                           first-letter:text-primary-700 dark:first-letter:text-primary-400
                           text-gray-900 dark:text-gray-200`
                         }>
-                          {paragraph.content ? decompressFromBase64(paragraph.content) : paragraph.walrus_id}
+                          {/* 尝试解压内容，如果失败则直接显示原始内容 */}
+                          {(() => {
+                            try {
+                              if (paragraph.content && typeof paragraph.content === 'string' && paragraph.content.trim().length > 0) {
+                                // 尝试解压
+                                const decompressed = decompressFromBase64(paragraph.content);
+                                if (decompressed) return decompressed;
+                              }
+                              // 如果解压失败或内容为空，直接显示原始内容
+                              return paragraph.content || paragraph.walrus_id || '';
+                            } catch (e) {
+                              console.log('解压段落内容失败:', e);
+                              return paragraph.content || paragraph.walrus_id || '';
+                            }
+                          })()}
                         </p>
                         <div className="flex justify-end items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          <span className="mr-3 italic font-handwriting text-sm">—— {paragraph.author}</span>
+                          <span className="mr-3 italic font-handwriting text-sm">—— {shortenAddress(paragraph.author)}</span>
                           <span className="flex items-center bg-amber-50 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                             </svg>
-                            <span className="font-medium text-amber-700 dark:text-amber-300">{paragraph.votes}</span>
+                            <span className="font-medium text-amber-700 dark:text-amber-300">{Number(paragraph.votes) || 0}</span>
                           </span>
                         </div>
                       </motion.div>

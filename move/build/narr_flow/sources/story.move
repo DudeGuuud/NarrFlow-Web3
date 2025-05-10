@@ -1,6 +1,12 @@
 module narr_flow::story {
     use std::string;
     use narr_flow::token;
+    use sui::object;
+    use sui::tx_context;
+    use sui::transfer;
+
+    // 错误代码
+    const ENotAuthorized: u64 = 200;
 
     /// 段落对象
     public struct Paragraph has copy, drop, store {
@@ -34,7 +40,7 @@ module narr_flow::story {
         transfer::share_object(book);
     }
 
-    /// 开启新书（不再需要归档票数阈值）
+    /// 开启新书（不再需要归档票数阈值）- 仅管理员可调用
     public entry fun start_new_book(
         story_book: &mut StoryBook,
         title: string::String,
@@ -42,23 +48,28 @@ module narr_flow::story {
         treasury: &mut token::Treasury,
         ctx: &mut TxContext
     ) {
+        let sender = tx_context::sender(ctx);
+        // 检查调用者是否为管理员
+        assert!(token::is_admin(treasury, sender), ENotAuthorized);
+
         let book = Book {
             id: object::new(ctx),
             title,
-            author,
+            author, // 这里的author是提案的作者，而非调用者
             status: 0,
             index: vector::length(&story_book.books) + 1,
             paragraphs: vector::empty<Paragraph>(),
         };
         vector::push_back(&mut story_book.books, book);
         story_book.current_book_index = vector::length(&story_book.books) - 1;
-        // 奖励
+
+        // 奖励给提案作者
         let idx = story_book.current_book_index;
         let book_ref = vector::borrow(&story_book.books, idx);
-        token::reward_start_new_book(treasury, object::id(book_ref), ctx);
+        token::reward_start_new_book_to(treasury, object::id(book_ref), author, ctx);
     }
 
-    /// 添加段落
+    /// 添加段落 - 仅管理员可调用
     public entry fun add_paragraph(
         story_book: &mut StoryBook,
         content: string::String,
@@ -66,6 +77,10 @@ module narr_flow::story {
         treasury: &mut token::Treasury,
         ctx: &mut TxContext
     ) {
+        let sender = tx_context::sender(ctx);
+        // 检查调用者是否为管理员
+        assert!(token::is_admin(treasury, sender), ENotAuthorized);
+
         // 限制内容最大字符数（2000字符）
         assert!(string::length(&content) <= 2000, 110); // 超出2000字符报错
         let idx = story_book.current_book_index;
@@ -73,8 +88,8 @@ module narr_flow::story {
         assert!(book_ref.status == 0, 100); // 只能给进行中的书添加段落
         let para = Paragraph { content, author, votes: 0 };
         vector::push_back(&mut book_ref.paragraphs, para);
-        // 奖励
-        token::reward_paragraph_addition(treasury, object::id(book_ref), ctx);
+        // 奖励给提案作者
+        token::reward_paragraph_addition_to(treasury, object::id(book_ref), author, ctx);
     }
 
     /// 投票
@@ -89,12 +104,16 @@ module narr_flow::story {
         para_ref.votes = para_ref.votes + 1;
     }
 
-    /// 归档书本（段落数达到10时可归档）
+    /// 归档书本（段落数达到10时可归档）- 仅管理员可调用
     public entry fun archive_book(
         story_book: &mut StoryBook,
         treasury: &mut token::Treasury,
         ctx: &mut TxContext
     ) {
+        let sender = tx_context::sender(ctx);
+        // 检查调用者是否为管理员
+        assert!(token::is_admin(treasury, sender), ENotAuthorized);
+
         let idx = story_book.current_book_index;
         let book_ref = vector::borrow_mut(&mut story_book.books, idx);
         assert!(book_ref.status == 0, 130);
@@ -102,8 +121,8 @@ module narr_flow::story {
         book_ref.status = 1;
         // 归档后 current_book_index 指向无效，需前端检测后自动开启新书
         story_book.current_book_index = 0;
-        // 奖励
-        token::reward_archive(treasury, object::id(book_ref), ctx);
+        // 奖励给提案作者 (使用书本的作者作为接收者)
+        token::reward_archive_to(treasury, object::id(book_ref), book_ref.author, ctx);
     }
 
     /// 查询所有 Book
@@ -120,4 +139,4 @@ module narr_flow::story {
     public fun get_current_book_index(story_book: &StoryBook): u64 {
         story_book.current_book_index
     }
-} 
+}

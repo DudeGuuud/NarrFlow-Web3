@@ -129,7 +129,29 @@ export const translations: { [key: string]: TranslationType } = {
     已归档的书: 'Archived Book',
     暂无归档书: 'No archived books yet',
     暂无段落: 'No paragraphs yet',
-    返回: 'Back'
+    返回: 'Back',
+
+    // 投票信息
+    voting_info_title: 'Voting Information',
+    voting_info_description: 'How the voting system works:',
+    voting_info_point1: 'Proposals with the most votes will be automatically added to the book when the timer expires.',
+    voting_info_point2: 'Each wallet can only vote once per voting session.',
+    voting_info_point3: 'Winning proposals earn tokens as rewards.',
+    voting_threshold_info: 'A minimum of {threshold} votes is required for a proposal to win.',
+
+    // 倒计时
+    voting_ends_in: 'Voting ends in',
+    voting_expired: 'Voting has ended',
+
+    // 错误信息
+    error_voting: 'Error occurred while voting',
+    error_adding_proposal: 'Error occurred while adding proposal',
+    no_active_voting_session: 'No active voting session',
+    already_voted_other: 'You have already voted for another proposal',
+    already_voted_this: 'You have already voted for this proposal',
+
+    // 管理员功能
+    admin_only_function: 'This function is only available to administrators'
   },
 
   zh: {
@@ -250,6 +272,28 @@ export const translations: { [key: string]: TranslationType } = {
     已归档的书: '已归档的书',
     暂无归档书: '暂无归档书',
     暂无段落: '暂无段落',
-    返回: '返回'
+    返回: '返回',
+
+    // 投票信息
+    voting_info_title: '投票信息',
+    voting_info_description: '投票系统说明：',
+    voting_info_point1: '当倒计时结束时，得票最多的提案将自动添加到书中。',
+    voting_info_point2: '每个钱包在每个投票会话中只能投一次票。',
+    voting_info_point3: '获胜的提案将获得代币奖励。',
+    voting_threshold_info: '提案需要至少获得{threshold}票才能胜出。',
+
+    // 倒计时
+    voting_ends_in: '投票剩余时间',
+    voting_expired: '投票已结束',
+
+    // 错误信息
+    error_voting: '投票时发生错误',
+    error_adding_proposal: '添加提案时发生错误',
+    no_active_voting_session: '没有活跃的投票会话',
+    already_voted_other: '您已经为其他提案投过票了',
+    already_voted_this: '您已经为此提案投过票了',
+
+    // 管理员功能
+    admin_only_function: '此功能仅管理员可用'
   }
 };
