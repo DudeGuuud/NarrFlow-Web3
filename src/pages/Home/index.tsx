@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn, SlideUp, BookAnimation } from '../../components/animations';
 import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
-import { replaceParams } from '../../utils/langUtils';
 import { isMobileDevice } from '../../utils/deviceUtils';
 import { useSuiStory } from '../../hooks/useSuiStory';
 import { shortenAddress } from '../../utils/langUtils';
@@ -12,49 +11,7 @@ import { decompressFromBase64 } from 'lz-string';
 
 const MAX_BYTES = 2000;
 
-// VotingBook 组件：展示正在投票的书（链上集成）
-const VotingBook: React.FC<{ book: any }> = ({ book }) => {
-  const { t } = useLang();
-
-  if (!book) return null;
-
-  // 计算作者地址缩略形式
-  const shortenedAuthor = shortenAddress(book.author);
-
-  // 计算段落数量
-  const paragraphCount = Array.isArray(book.paragraphs) ? book.paragraphs.length : 0;
-
-  // 计算总投票数
-  const totalVotes = Array.isArray(book.paragraphs)
-    ? book.paragraphs.reduce((sum: number, p: any) => sum + (Number(p.votes) || 0), 0)
-    : 0;
-
-  return (
-    <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-primary-100 dark:border-gray-700">
-      <h2 className="text-2xl font-bold mb-2 text-primary-800 dark:text-primary-200">
-        {t('voting_book_title', { title: book.title || t('demo_book_title') })}
-      </h2>
-      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">✍️</span>
-        {t('voting_book_author', { author: shortenedAuthor })}
-      </p>
-      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">📝</span>
-        {t('voting_book_paragraph_count', { count: paragraphCount })}
-      </p>
-      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">👍</span>
-        {t('voting_book_total_votes', { votes: totalVotes })}
-      </p>
-      <p className="text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-        <span className="w-5 h-5 inline-flex items-center justify-center mr-2 opacity-70">📊</span>
-        {t('voting_book_status', {
-          status: book.status === 0 ? t('create_status_ongoing') : t('create_status_archived')
-        })}
-      </p>
-    </div>
-  );
-};
+// 不再需要单独的 VotingBook 组件
 
 const Home: React.FC = () => {
   const { t } = useLang();
@@ -67,10 +24,9 @@ const Home: React.FC = () => {
     addParagraph,
     getAllBooks,
     getAllParagraphs,
-    calcContentHash,
   } = useSuiStory();
 
-  const [books, setBooks] = useState<any[]>([]);
+  // 不再需要 books 状态
   const [currentBook, setCurrentBook] = useState<any>(null);
   const [paragraphs, setParagraphs] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -98,7 +54,6 @@ const Home: React.FC = () => {
   useEffect(() => {
     async function fetchBooks() {
       const allBooks = await getAllBooks();
-      setBooks(allBooks);
       const ongoing = allBooks.find((b: any) => b.status === 0);
       setCurrentBook(ongoing || null);
       if (ongoing) {
@@ -179,7 +134,6 @@ const Home: React.FC = () => {
       setInput('');
       // 刷新
       const allBooks = await getAllBooks();
-      setBooks(allBooks);
       const ongoing = allBooks.find((b: any) => b.status === 0);
       setCurrentBook(ongoing || null);
       if (ongoing) {

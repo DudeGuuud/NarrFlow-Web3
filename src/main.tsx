@@ -29,12 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork={defaultNetwork}>
-        <WalletProvider
-          slushWallet={{
-            name: 'NarrFlow',
-          }}
-          autoConnect
-        >
+        <WalletProvider autoConnect>
           <ThemeProvider>
             <LangProvider>
               <RouterProvider router={router} future={{ v7_startTransition: true }} />

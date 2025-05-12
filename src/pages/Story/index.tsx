@@ -3,89 +3,7 @@ import { FadeIn } from '../../components/animations';
 import Navbar from '../../components/layout/Navbar';
 import { useSuiStory } from '../../hooks/useSuiStory';
 import { useLang } from '../../contexts/lang/LangContext';
-import { useNavigate } from 'react-router-dom';
 import { shortenAddress } from '../../utils/langUtils';
-
-// ArchivedBooks 组件：展示所有已归档的书（链上集成预留接口）
-const ArchivedBooks: React.FC = () => {
-  // TODO: 替换为链上查询逻辑
-  // 示例数据
-  const [books] = React.useState([
-    { title: '第一本书', author: 'Alice', paragraph_count: 10, total_votes: 15, index: 1 },
-    { title: '第二本书', author: 'Bob', paragraph_count: 9, total_votes: 12, index: 2 },
-  ]);
-  if (!books.length) return <div>暂无归档书</div>;
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">已归档的书</h2>
-      {books.map((book, idx) => (
-        <div key={idx} className="p-4 border rounded mb-2">
-          <h3 className="font-bold">{book.title}（第{book.index}本书）</h3>
-          <p>作者: {book.author}</p>
-          <p>段落数: {book.paragraph_count}</p>
-          <p>总投票: {book.total_votes}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const BrowseStories: React.FC = () => {
-  const { getAllBooks } = useSuiStory();
-  const { t } = useLang();
-  const [books, setBooks] = useState<any[]>([]);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetch() {
-      setLoading(true);
-      const allBooks = await getAllBooks();
-      setBooks(allBooks);
-      setLoading(false);
-    }
-    fetch();
-  }, []);
-
-  if (loading) return <div>{t('加载中...') || '加载中...'}</div>;
-  if (!books.length) return <div>{t('暂无书本') || '暂无书本'}</div>;
-
-  const archivedBooks = books.filter((b: any) => b.status === 1);
-  const activeBooks = books.filter((b: any) => b.status === 0);
-
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">{t('进行中的书') || '进行中的书'}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {activeBooks.length ? activeBooks.map((book, idx) => (
-          <div
-            key={book.index}
-            className="p-4 border rounded shadow hover:shadow-lg cursor-pointer bg-white dark:bg-gray-800 transition"
-            onClick={() => navigate(`/story/${book.index}`)}
-          >
-            <h3 className="font-bold text-lg">{book.title}（{t('进行中') || '进行中'}）</h3>
-            <p>{t('段落数') || '段落数'}: {book.paragraphs?.length || 0}</p>
-            <p>{t('总投票') || '总投票'}: {book.total_votes ?? 0}</p>
-          </div>
-        )) : <div className="col-span-2">{t('暂无进行中的书') || '暂无进行中的书'}</div>}
-      </div>
-      <h2 className="text-2xl font-bold mb-4">{t('已归档的书') || '已归档的书'}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {archivedBooks.length ? archivedBooks.map((book, idx) => (
-          <div
-            key={book.index}
-            className="p-4 border rounded shadow hover:shadow-lg cursor-pointer bg-white dark:bg-gray-800 transition"
-            onClick={() => navigate(`/story/${book.index}`)}
-          >
-            <h3 className="font-bold text-lg">{book.title}（{t('已归档') || '已归档'}）</h3>
-            <p>{t('段落数') || '段落数'}: {book.paragraphs?.length || 0}</p>
-            <p>{t('总投票') || '总投票'}: {book.total_votes ?? 0}</p>
-          </div>
-        )) : <div className="col-span-2">{t('暂无归档书') || '暂无归档书'}</div>}
-      </div>
-    </div>
-  );
-};
 
 const Story: React.FC = () => {
   const { getAllBooks, getAllParagraphContents } = useSuiStory();
@@ -125,7 +43,6 @@ const Story: React.FC = () => {
   if (!books.length) return <div className="text-center text-gray-500 dark:text-gray-300 py-16">{t('暂无书本')}</div>;
 
   const archivedBooks = books.filter((b: any) => b.status === 1);
-  const activeBooks = books.filter((b: any) => b.status === 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
@@ -137,7 +54,7 @@ const Story: React.FC = () => {
           </h1>
         </FadeIn>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {archivedBooks.length ? archivedBooks.map((book, idx) => (
+          {archivedBooks.length ? archivedBooks.map((book) => (
             <div
               key={book.index}
               className="p-6 bg-white dark:bg-gray-900 rounded-xl shadow hover:shadow-lg cursor-pointer border border-primary-100 transition flex flex-col gap-2"

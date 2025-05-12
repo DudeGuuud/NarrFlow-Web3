@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink as RouterNavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink as RouterNavLink } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLang } from '../../contexts/lang/LangContext';
-import { isMobileDevice } from '../../utils/deviceUtils';
-import { Globe, Sun, Moon, Menu, X, Check } from 'lucide-react';
+import { Globe, Sun, Moon, Check } from 'lucide-react';
 import { ConnectButton } from '@mysten/dapp-kit';
 
 // 导航链接配置
@@ -37,34 +36,10 @@ const NavLink = ({ children, to, className, onClick }: {
 const Navbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLang();
-  const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  // 检测设备类型
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsMobile(isMobileDevice());
-    };
-
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-
-    return () => {
-      window.removeEventListener('resize', checkDevice);
-    };
-  }, []);
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
+  // 不需要检测设备类型，因为我们使用响应式设计
 
   // 处理语言切换
   const handleLangChange = (langCode: 'en' | 'zh') => {

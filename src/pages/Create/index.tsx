@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useSuiStory } from '../../hooks/useSuiStory';
-import { FaThumbsUp, FaClock } from 'react-icons/fa';
 import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
 import { shortenAddress } from '../../utils/langUtils';
@@ -8,37 +7,22 @@ import { useCurrentAccount } from '@mysten/dapp-kit';
 import { supabase } from '../../lib/supabaseClient';
 import CountdownTimer from '../../components/CountdownTimer';
 
-const MAX_BYTES = 2000;
-
 const CreatePage: React.FC = () => {
   const {
     getCurrentBook,
-    addParagraph,
-    voteParagraph,
-    archiveBook,
-    startNewBook,
-    getAllParagraphContents,
-    addParagraphAndArchive,
   } = useSuiStory();
-  const { lang, t } = useLang();
+  const { t } = useLang();
   const account = useCurrentAccount();
-  const VOTE_THRESHOLD = 2; // 获胜阈值，1票自动上链
 
   const [book, setBook] = useState<any>(null);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [inputBytes, setInputBytes] = useState(0);
-  const [paragraphContents, setParagraphContents] = useState<string[]>([]);
-  const [paragraphLoading, setParagraphLoading] = useState(false);
   const [showStartNewBook, setShowStartNewBook] = useState(false);
 
   // 提案和投票状态，全部从 Supabase 获取
   const [proposals, setProposals] = useState<any[]>([]);
-  const [loadingProposals, setLoadingProposals] = useState(false);
   const [votedProposalId, setVotedProposalId] = useState<string | null>(null); // 当前钱包已投的提案id
-
-  // 防止自动写入链上段落死循环
-  const [writing, setWriting] = useState(false);
 
   // 当前投票类型：没有书时为'title'，有进行中的书时为'paragraph'
   const [voteType, setVoteType] = useState<'title' | 'paragraph'>('paragraph');
@@ -61,15 +45,6 @@ const CreatePage: React.FC = () => {
       setVoteType('title');
     } else {
       setVoteType('paragraph');
-    }
-    if (b && Array.isArray(b.paragraphs) && b.paragraphs.length > 0) {
-      setParagraphLoading(true);
-      const contents = await getAllParagraphContents(b);
-      console.log('链上paragraphContents:', contents);
-      setParagraphContents(contents);
-      setParagraphLoading(false);
-    } else {
-      setParagraphContents([]);
     }
     // 归档后自动检测
     if (b && b.status === 1) {
@@ -146,8 +121,6 @@ const CreatePage: React.FC = () => {
 
   // 获取所有提案（按type过滤）
   const fetchProposals = async () => {
-    setLoadingProposals(true);
-
     try {
       // 从后端 API 获取
       const type = votingSession ? votingSession.type : undefined;
@@ -204,8 +177,6 @@ const CreatePage: React.FC = () => {
         console.error('从 Supabase 获取提案失败:', supabaseError);
         setProposals([]);
       }
-    } finally {
-      setLoadingProposals(false);
     }
   };
 
@@ -245,18 +216,7 @@ const CreatePage: React.FC = () => {
     return !!votedProposalId && votedProposalId !== proposalId;
   };
 
-  // 轮询链上段落是否已添加
-  const waitForParagraphAdded = async (expectedCount: number, timeout = 15000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      const latestBook = await getCurrentBook();
-      if (latestBook && Array.isArray(latestBook.paragraphs) && latestBook.paragraphs.length >= expectedCount) {
-        return true;
-      }
-      await new Promise(res => setTimeout(res, 1500));
-    }
-    return false;
-  };
+  // 不再需要轮询链上段落，由后端自动处理
 
   // 定期刷新投票会话状态和提案
   useEffect(() => {
@@ -384,45 +344,7 @@ const CreatePage: React.FC = () => {
     }
   };
 
-  // 这些功能现在由后端自动处理，前端不再需要这些函数
-  // 但保留函数以防需要管理员手动操作
-
-  // 归档 - 仅管理员可用
-  const handleArchive = async () => {
-    alert(t('admin_only_function'));
-    return;
-
-    // 以下代码保留但不再使用
-    /*
-    setLoading(true);
-    try {
-      await archiveBook();
-      await refresh();
-      // 归档后自动开启新书
-      await startNewBook(t('新书标题'));
-      await refresh();
-    } finally {
-      setLoading(false);
-    }
-    */
-  };
-
-  // 开启新书 - 仅管理员可用
-  const handleStartNewBook = async () => {
-    alert(t('admin_only_function'));
-    return;
-
-    // 以下代码保留但不再使用
-    /*
-    setLoading(true);
-    try {
-      await startNewBook(t('新书标题'));
-      await refresh();
-    } finally {
-      setLoading(false);
-    }
-    */
-  };
+  // 这些功能现在由后端自动处理，前端不再需要管理员手动操作函数
 
   // 页面渲染逻辑重构
   if (loading) {

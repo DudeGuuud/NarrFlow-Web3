@@ -94,6 +94,9 @@ sui client publish --gas-budget 100000000
 2. 执行以下 SQL 语句创建必要的表：
 
 ```sql
+-- 启用 UUID 扩展
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- 创建投票会话表
 CREATE TABLE IF NOT EXISTS public.voting_sessions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -152,6 +155,28 @@ VALUES ('title', 'active', NOW() + INTERVAL '5 minutes', NOW(), NOW());
 
 3. 记录 Supabase URL 和 API Key
 
+4. 在 Supabase 中设置 RLS (Row Level Security) 策略，确保数据安全：
+
+```sql
+-- 为所有表启用 RLS
+ALTER TABLE public.voting_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.proposal_stats ENABLE ROW LEVEL SECURITY;
+
+-- 创建允许匿名读取的策略
+CREATE POLICY "允许匿名读取投票会话" ON public.voting_sessions FOR SELECT USING (true);
+CREATE POLICY "允许匿名读取提案" ON public.proposals FOR SELECT USING (true);
+CREATE POLICY "允许匿名读取投票" ON public.votes FOR SELECT USING (true);
+CREATE POLICY "允许匿名读取提案统计" ON public.proposal_stats FOR SELECT USING (true);
+
+-- 创建允许服务角色完全访问的策略
+CREATE POLICY "允许服务角色完全访问投票会话" ON public.voting_sessions USING (auth.role() = 'service_role');
+CREATE POLICY "允许服务角色完全访问提案" ON public.proposals USING (auth.role() = 'service_role');
+CREATE POLICY "允许服务角色完全访问投票" ON public.votes USING (auth.role() = 'service_role');
+CREATE POLICY "允许服务角色完全访问提案统计" ON public.proposal_stats USING (auth.role() = 'service_role');
+```
+
 ### 步骤 3: 配置环境变量
 在项目根目录创建 `.env` 文件：
 
@@ -165,15 +190,19 @@ VITE_SUI_NETWORK=testnet  # 或 mainnet
 # 数据库配置
 VITE_SUPABASE_URL=你的Supabase URL
 VITE_SUPABASE_KEY=你的Supabase API Key
+SUPABASE_URL=你的Supabase URL  # 后端使用
+SUPABASE_KEY=你的Supabase服务角色Key  # 后端使用，注意这里需要使用服务角色Key
 
 # 后端配置
 PORT=3001
 VOTING_COUNTDOWN_SECONDS=300  # 投票倒计时（秒）
-VOTE_THRESHOLD=2  # 投票阈值
+VOTE_THRESHOLD=10  # 投票阈值，至少需要10票才能胜出
 
 # 管理员钱包私钥（用于执行链上交易）
-ADMIN_PRIVATE_KEY=你的管理员钱包私钥
+ADMIN_PRIVATE_KEY=你的管理员钱包私钥  # Bech32格式的私钥
 ```
+
+> **重要提示**：确保 `.env` 文件不会被提交到版本控制系统中。在 `.gitignore` 文件中添加 `.env` 以防止意外提交。
 
 ### 步骤 4: 安装依赖并构建项目
 ```bash
@@ -196,25 +225,110 @@ pnpm build
 ```
 
 ### 步骤 5: 启动服务
-开发环境：
+#### 开发环境：
 ```bash
 # 启动后端服务器
 cd server
-pnpm dev
+node dist/index.js
+# 或者使用 nodemon 进行开发
+# npx nodemon dist/index.js
 
 # 新开一个终端，启动前端开发服务器
 cd ..
 pnpm dev
 ```
 
-生产环境：
+#### 生产环境：
 ```bash
-# 启动后端服务器
-cd server
-pnpm start
+# 构建生产版本
+pnpm build
 
-# 使用 nginx 或其他服务器部署前端构建产物
-# 例如：将 dist 目录部署到 nginx
+# 启动后端服务器（使用 PM2 进行进程管理）
+cd server
+npm install -g pm2
+pm2 start dist/index.js --name "narrflow-backend"
+
+# 部署前端
+# 方法1：使用 Nginx 部署
+sudo apt-get install nginx
+sudo cp -r ../dist/* /var/www/html/
+sudo systemctl restart nginx
+
+# 方法2：使用 serve 部署（简单测试用）
+npm install -g serve
+serve -s ../dist -l 5000
+```
+
+### 步骤 6: 生产环境优化
+1. **设置 HTTPS**：
+```bash
+# 使用 Let's Encrypt 获取 SSL 证书
+sudo apt-get install certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com
+```
+
+2. **Nginx 配置优化**：
+创建 `/etc/nginx/sites-available/narrflow.conf`：
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    # 前端静态文件
+    location / {
+        root /var/www/html;
+        try_files $uri $uri/ /index.html;
+        expires 1d;
+        add_header Cache-Control "public, max-age=86400";
+    }
+
+    # 后端 API 代理
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+3. **启用链接**：
+```bash
+sudo ln -s /etc/nginx/sites-available/narrflow.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+4. **设置自动更新**：
+```bash
+# 创建更新脚本
+cat > update.sh << 'EOF'
+#!/bin/bash
+cd /path/to/NarrFlow-Web3
+git pull
+pnpm install
+pnpm build
+cd server
+pnpm build
+pm2 restart narrflow-backend
+sudo cp -r ../dist/* /var/www/html/
+EOF
+
+chmod +x update.sh
+
+# 添加到 crontab（每天凌晨3点更新）
+(crontab -l 2>/dev/null; echo "0 3 * * * /path/to/update.sh") | crontab -
 ```
 
 ## 系统架构图
@@ -265,20 +379,64 @@ graph TD
 
 ### 故障排除
 1. **投票未自动执行**：
-   - 检查后端服务器是否正常运行
-   - 检查定时任务是否正常执行
-   - 检查管理员钱包是否有足够的 gas
-   - 查看服务器日志中的错误信息
+   - 检查后端服务器是否正常运行：`pm2 status` 或 `ps aux | grep node`
+   - 检查定时任务是否正常执行：查看日志 `pm2 logs narrflow-backend`
+   - 检查管理员钱包是否有足够的 gas：使用 Sui Explorer 查看钱包余额
+   - 查看服务器日志中的错误信息：`pm2 logs narrflow-backend --lines 100`
+   - 确认环境变量是否正确设置：检查 `.env` 文件中的 `ADMIN_PRIVATE_KEY`
 
 2. **前端无法连接后端**：
-   - 确认后端服务器正在运行
-   - 检查 CORS 设置
-   - 验证 API 端点是否正确
+   - 确认后端服务器正在运行：`curl http://localhost:3001/api/health`
+   - 检查 CORS 设置：确保后端允许前端域名的请求
+   - 验证 API 端点是否正确：检查前端代码中的 API URL
+   - 检查网络防火墙：确保端口 3001 已开放
 
 3. **数据库连接问题**：
-   - 检查 Supabase 凭证是否正确
-   - 确认 Supabase 服务是否可用
-   - 检查网络连接
+   - 检查 Supabase 凭证是否正确：验证 `.env` 文件中的 URL 和 Key
+   - 确认 Supabase 服务是否可用：访问 Supabase 控制台
+   - 检查网络连接：`ping database.supabase.co`
+   - 检查 RLS 策略：确保在 Supabase 中正确设置了行级安全策略
+
+4. **区块链交互问题**：
+   - 检查合约 ID 是否正确：验证 `.env` 文件中的 `PACKAGE_ID`、`STORYBOOK_ID` 等
+   - 确认网络设置：检查是否连接到正确的网络（testnet/mainnet）
+   - 检查交易历史：使用 Sui Explorer 查看最近的交易
+   - 验证智能合约：确保合约已正确部署并初始化
+
+5. **前端显示问题**：
+   - 清除浏览器缓存：按 Ctrl+F5 或使用开发者工具清除缓存
+   - 检查控制台错误：打开浏览器开发者工具查看错误信息
+   - 验证 API 响应：使用开发者工具的网络面板检查 API 响应
+   - 检查 React 组件：确保组件正确渲染和更新
+
+### 常见问题解答
+
+1. **Q: 如何重置投票会话？**
+   A: 在 Supabase 中执行以下 SQL：
+   ```sql
+   UPDATE public.voting_sessions SET status = 'completed' WHERE status = 'active';
+   INSERT INTO public.voting_sessions (type, status, expires_at)
+   VALUES ('title', 'active', NOW() + INTERVAL '5 minutes');
+   ```
+
+2. **Q: 如何修改投票倒计时时间？**
+   A: 修改 `.env` 文件中的 `VOTING_COUNTDOWN_SECONDS` 值，然后重启后端服务器。
+
+3. **Q: 如何查看当前活跃的投票会话？**
+   A: 访问 `http://localhost:3001/api/voting-sessions/current` 或在 Supabase 中查询：
+   ```sql
+   SELECT * FROM public.voting_sessions WHERE status = 'active';
+   ```
+
+4. **Q: 如何手动触发投票结算？**
+   A: 访问 `http://localhost:3001/api/voting-sessions/check`，这将触发后端检查过期的投票会话。
+
+5. **Q: 如何清空所有提案和投票？**
+   A: 在 Supabase 中执行以下 SQL（谨慎使用）：
+   ```sql
+   DELETE FROM public.votes;
+   DELETE FROM public.proposals;
+   ```
 
 ## 贡献
 欢迎贡献代码、报告问题或提出改进建议。请先 fork 本仓库，创建功能分支，然后提交 PR。
