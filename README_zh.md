@@ -240,23 +240,65 @@ pnpm dev
 
 #### 生产环境：
 ```bash
-# 构建生产版本
+# 构建生产版本（前端使用pnpm，后端使用npm）
 pnpm build
 
-# 启动后端服务器（使用 PM2 进行进程管理）
+# 构建后端
 cd server
+npm install
+npm run build
+
+# 启动后端服务器（使用 PM2 进行进程管理）
 npm install -g pm2
 pm2 start dist/index.js --name "narrflow-backend"
 
-# 部署前端
-# 方法1：使用 Nginx 部署
+# 返回根目录
+cd ..
+
+# 使用Nginx部署前端
 sudo apt-get install nginx
-sudo cp -r ../dist/* /var/www/html/
+
+# 将前端文件复制到Nginx的默认网站根目录
+sudo cp -r dist/* /var/www/html/
+
+# 创建Nginx配置
+sudo bash -c "cat > /etc/nginx/sites-available/narrflow.conf << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    # 前端静态文件
+    location / {
+        root /var/www/html;
+        index index.html;
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # 后端API代理
+    location /api/ {
+        proxy_pass http://localhost:3001/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF"
+
+# 启用配置
+sudo ln -sf /etc/nginx/sites-available/narrflow.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default  # 移除默认配置（可选）
+
+# 测试Nginx配置
+sudo nginx -t
+
+# 重启Nginx
 sudo systemctl restart nginx
 
-# 方法2：使用 serve 部署（简单测试用）
+# 替代方法：使用serve部署（简单测试用）
 npm install -g serve
-serve -s ../dist -l 5000
+serve -s dist -l 5000
 ```
 
 ### 步骤 6: 生产环境优化
@@ -376,6 +418,81 @@ graph TD
 1. **检查服务器日志**：定期检查后端服务器日志，确保没有错误或异常
 2. **监控数据库**：检查数据库连接和表大小，必要时进行优化
 3. **更新依赖**：定期更新 npm 依赖，特别是安全相关的更新
+
+### Nginx部署常见问题及解决方案
+
+1. **500 内部服务器错误**
+   - **问题**：通过Nginx访问前端时遇到500内部服务器错误。
+   - **解决方案**：这通常是由权限问题引起的。不要将Nginx配置为直接从项目目录提供文件，而是将前端文件复制到Nginx的默认网站根目录：
+     ```bash
+     sudo cp -r dist/* /var/www/html/
+     ```
+   - **解释**：Nginx运行的www-data用户可能没有权限访问您的用户目录中的文件。将文件复制到/var/www/html/确保了正确的权限。
+
+2. **前端加载正常但API调用失败**
+   - **问题**：前端正常加载，但对后端的API调用失败。
+   - **解决方案**：确保您的Nginx配置正确代理API请求：
+     ```nginx
+     location /api/ {
+         proxy_pass http://localhost:3001/api/;
+         # 其他代理设置...
+     }
+     ```
+   - **验证**：使用curl直接测试API：
+     ```bash
+     curl -v http://localhost/api/health
+     ```
+
+3. **混合包管理器问题**
+   - **问题**：由于混合使用包管理器导致构建失败。
+   - **解决方案**：始终为前端使用pnpm，为后端使用npm：
+     ```bash
+     # 前端（根目录）
+     pnpm install
+     pnpm build
+
+     # 后端（server目录）
+     cd server
+     npm install
+     npm run build
+     ```
+
+4. **PM2进程管理**
+   - **问题**：后端服务意外停止。
+   - **解决方案**：使用PM2管理后端进程并设置开机自启：
+     ```bash
+     pm2 start dist/index.js --name "narrflow-backend"
+     pm2 save
+     pm2 startup  # 按照提示设置自动启动
+     ```
+   - **监控**：检查PM2日志查找错误：
+     ```bash
+     pm2 logs narrflow-backend
+     ```
+
+### 调试技巧
+
+1. **检查Nginx错误日志**：
+   ```bash
+   sudo tail -f /var/log/nginx/error.log
+   ```
+
+2. **在Nginx中启用调试日志**：
+   在server块中添加：
+   ```nginx
+   error_log /var/log/nginx/narrflow-error.log debug;
+   ```
+
+3. **验证文件权限**：
+   ```bash
+   ls -la /var/www/html/
+   sudo chmod -R 755 /var/www/html/
+   ```
+
+4. **测试后端连接**：
+   ```bash
+   curl http://localhost:3001/api/health
+   ```
 
 ### 故障排除
 1. **投票未自动执行**：

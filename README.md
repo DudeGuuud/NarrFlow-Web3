@@ -242,23 +242,65 @@ pnpm dev
 
 #### Production Environment:
 ```bash
-# Build production version
+# Build production version (frontend with pnpm, backend with npm)
 pnpm build
 
-# Start backend server (using PM2 for process management)
+# Build backend
 cd server
+npm install
+npm run build
+
+# Start backend server (using PM2 for process management)
 npm install -g pm2
 pm2 start dist/index.js --name "narrflow-backend"
 
-# Deploy frontend
-# Method 1: Using Nginx
+# Return to root directory
+cd ..
+
+# Deploy frontend with Nginx
 sudo apt-get install nginx
-sudo cp -r ../dist/* /var/www/html/
+
+# Copy frontend files to Nginx's default web root directory
+sudo cp -r dist/* /var/www/html/
+
+# Create Nginx configuration
+sudo bash -c "cat > /etc/nginx/sites-available/narrflow.conf << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    # Frontend static files
+    location / {
+        root /var/www/html;
+        index index.html;
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # Backend API proxy
+    location /api/ {
+        proxy_pass http://localhost:3001/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF"
+
+# Enable the configuration
+sudo ln -sf /etc/nginx/sites-available/narrflow.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default  # Remove default config (optional)
+
+# Test Nginx configuration
+sudo nginx -t
+
+# Restart Nginx
 sudo systemctl restart nginx
 
-# Method 2: Using serve (for simple testing)
+# Alternative Method: Using serve (for simple testing)
 npm install -g serve
-serve -s ../dist -l 5000
+serve -s dist -l 5000
 ```
 
 ## System Architecture Diagram
@@ -300,6 +342,83 @@ graph TD
     F --> P
     L --> Q
 ```
+
+## Troubleshooting Deployment Issues
+
+### Common Nginx Deployment Issues
+
+1. **500 Internal Server Error**
+   - **Problem**: When accessing the frontend through Nginx, you may encounter a 500 Internal Server Error.
+   - **Solution**: This is often caused by permission issues. Instead of configuring Nginx to serve files directly from your project directory, copy the frontend files to Nginx's default web root directory:
+     ```bash
+     sudo cp -r dist/* /var/www/html/
+     ```
+   - **Explanation**: The www-data user (which Nginx runs as) may not have permission to access files in your user directory. Copying files to /var/www/html/ ensures proper permissions.
+
+2. **Frontend Loads But API Calls Fail**
+   - **Problem**: The frontend loads correctly, but API calls to the backend fail.
+   - **Solution**: Ensure your Nginx configuration correctly proxies API requests:
+     ```nginx
+     location /api/ {
+         proxy_pass http://localhost:3001/api/;
+         # Other proxy settings...
+     }
+     ```
+   - **Verification**: Test the API directly with curl:
+     ```bash
+     curl -v http://localhost/api/health
+     ```
+
+3. **Mixed Package Manager Issues**
+   - **Problem**: Build failures due to mixing package managers.
+   - **Solution**: Always use pnpm for frontend and npm for backend:
+     ```bash
+     # Frontend (root directory)
+     pnpm install
+     pnpm build
+
+     # Backend (server directory)
+     cd server
+     npm install
+     npm run build
+     ```
+
+4. **PM2 Process Management**
+   - **Problem**: Backend service stops unexpectedly.
+   - **Solution**: Use PM2 to manage the backend process and set it to start on boot:
+     ```bash
+     pm2 start dist/index.js --name "narrflow-backend"
+     pm2 save
+     pm2 startup  # Follow the instructions to set up autostart
+     ```
+   - **Monitoring**: Check PM2 logs for errors:
+     ```bash
+     pm2 logs narrflow-backend
+     ```
+
+### Debugging Tips
+
+1. **Check Nginx Error Logs**:
+   ```bash
+   sudo tail -f /var/log/nginx/error.log
+   ```
+
+2. **Enable Debug Logging in Nginx**:
+   Add to your server block:
+   ```nginx
+   error_log /var/log/nginx/narrflow-error.log debug;
+   ```
+
+3. **Verify File Permissions**:
+   ```bash
+   ls -la /var/www/html/
+   sudo chmod -R 755 /var/www/html/
+   ```
+
+4. **Test Backend Connectivity**:
+   ```bash
+   curl http://localhost:3001/api/health
+   ```
 
 ## Contribution
 Contributions of code, issue reports, or improvement suggestions are welcome. Please fork this repository, create a feature branch, and then submit a PR.
