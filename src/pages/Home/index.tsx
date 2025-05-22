@@ -21,7 +21,6 @@ const Home: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const {
     startNewBook,
-    addParagraph,
     getAllBooks,
     getAllParagraphs,
   } = useSuiStory();
@@ -127,10 +126,31 @@ const Home: React.FC = () => {
     setLoading(true);
     try {
       if (!currentBook) {
+        // 如果没有当前书籍，创建新书
         await startNewBook(input);
       } else {
-        await addParagraph(input);
+        // 如果有当前书籍，向数据库投票池添加段落提案
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+        const response = await fetch(`${apiBaseUrl}/api/proposals`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: input,
+            author: window.localStorage.getItem('walletAddress') || 'unknown',
+            type: 'paragraph',
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`提交失败: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('提案已添加到投票池:', result);
       }
+
       setInput('');
       // 刷新
       const allBooks = await getAllBooks();

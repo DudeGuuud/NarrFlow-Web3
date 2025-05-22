@@ -96,7 +96,7 @@ export function useSuiStory() {
   async function startNewBook(title: string) {
     console.log('开始创建新书:', title);
     const address = checkWalletConnection();
-    
+
     const tx = new Transaction();
     tx.moveCall({
       target: `${PACKAGE_ID}::story::start_new_book`,
@@ -107,7 +107,7 @@ export function useSuiStory() {
         tx.object(TREASURY_ID),
       ],
     });
-    
+
     console.log('准备签名交易...');
     const result = await signAndExecuteTransaction({
       transaction: tx,
@@ -120,7 +120,7 @@ export function useSuiStory() {
   async function addParagraph(content: string) {
     console.log('开始添加段落');
     const address = checkWalletConnection();
-    
+
     const compressed = compressToBase64(content);
     const tx = new Transaction();
     tx.moveCall({
@@ -132,7 +132,7 @@ export function useSuiStory() {
         tx.object(TREASURY_ID),
       ],
     });
-    
+
     console.log('准备签名交易...');
     const result = await signAndExecuteTransaction({
       transaction: tx,
@@ -145,7 +145,7 @@ export function useSuiStory() {
   async function voteParagraph(paraIndex: number) {
     console.log('开始投票，段落索引:', paraIndex);
     checkWalletConnection();
-    
+
     const tx = new Transaction();
     tx.moveCall({
       target: `${PACKAGE_ID}::story::vote_paragraph`,
@@ -154,7 +154,7 @@ export function useSuiStory() {
         tx.pure.u64(paraIndex),
       ],
     });
-    
+
     console.log('准备签名交易...');
     const result = await signAndExecuteTransaction({
       transaction: tx,
@@ -167,7 +167,7 @@ export function useSuiStory() {
   async function archiveBook() {
     console.log('开始归档书本');
     checkWalletConnection();
-    
+
     const tx = new Transaction();
     tx.moveCall({
       target: `${PACKAGE_ID}::story::archive_book`,
@@ -176,7 +176,7 @@ export function useSuiStory() {
         tx.object(TREASURY_ID),
       ],
     });
-    
+
     console.log('准备签名交易...');
     const result = await signAndExecuteTransaction({
       transaction: tx,
@@ -188,13 +188,28 @@ export function useSuiStory() {
   // 5. 查询所有书（已解包，段落也解包）
   async function getAllBooks() {
     console.log('获取所有书本');
+    try {
+      // 尝试从后端API获取
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiBaseUrl}/api/books`);
+
+      if (response.ok) {
+        const books = await response.json();
+        console.log('从后端API获取到书本数量:', books.length);
+        return books as BookType[];
+      }
+    } catch (error) {
+      console.error('从后端API获取书本失败，回退到直接查询区块链:', error);
+    }
+
+    // 如果后端API失败，直接从区块链获取
     const storyBookObj = await suiClient.getObject({ id: STORYBOOK_ID, options: { showContent: true } });
     const fields = (storyBookObj.data?.content as any)?.fields;
     const books = (fields?.books || []).map(unpack);
     books.forEach((book: Record<string, any>) => {
       book.paragraphs = unpackParagraphs(book.paragraphs);
     });
-    console.log('获取到书本数量:', books.length);
+    console.log('从区块链获取到书本数量:', books.length);
     return books as BookType[];
   }
 
@@ -219,6 +234,23 @@ export function useSuiStory() {
   // 9. 获取当前正在进行中的书
   async function getCurrentBook() {
     console.log('获取当前进行中的书本');
+    try {
+      // 尝试从后端API获取
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiBaseUrl}/api/books/current`);
+
+      if (response.ok) {
+        const book = await response.json();
+        if (book && Object.keys(book).length > 0) {
+          console.log('从后端API获取到当前书本:', book.title);
+          return book;
+        }
+      }
+    } catch (error) {
+      console.error('从后端API获取当前书本失败，回退到直接查询区块链:', error);
+    }
+
+    // 如果后端API失败，直接从区块链获取
     const books = await getAllBooks();
     // 状态为0表示进行中
     return books.find((b: { status: number }) => b.status === 0);
@@ -228,7 +260,7 @@ export function useSuiStory() {
   async function addParagraphAndArchive(content: string) {
     console.log('添加段落并归档');
     const address = checkWalletConnection();
-    
+
     const compressed = compressToBase64(content);
     const tx = new Transaction();
     tx.moveCall({
@@ -247,7 +279,7 @@ export function useSuiStory() {
         tx.object(TREASURY_ID),
       ],
     });
-    
+
     console.log('准备签名交易...');
     const result = await signAndExecuteTransaction({
       transaction: tx,
@@ -265,7 +297,7 @@ export function useSuiStory() {
       console.error('未找到书本');
       throw new Error('Book not found');
     }
-    
+
     // 这里用 book.id 作为 story_id
     const tx = new Transaction();
     tx.moveCall({
@@ -275,7 +307,7 @@ export function useSuiStory() {
         tx.object(book.id),
       ],
     });
-    
+
     console.log('准备签名交易...');
     const result = await signAndExecuteTransaction({
       transaction: tx,

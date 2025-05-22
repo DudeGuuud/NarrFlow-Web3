@@ -1,4 +1,4 @@
-import { supabase } from '../index.js';
+import { supabase, logger } from '../index.js';
 import { VotingSession, Proposal, Vote, VotingSessionType, VotingSessionStatus, ProposalStats } from '../models/types.js';
 
 // 投票会话相关操作
@@ -118,7 +118,7 @@ export async function createProposal(
   author: string,
   type: VotingSessionType
 ): Promise<Proposal> {
-  console.log(`Creating new proposal: type=${type}, author=${author}, content=${content.substring(0, 30)}...`);
+  logger('info', `Creating new proposal: type=${type}, author=${author}, content=${content.substring(0, 30)}...`);
 
   // 确保作者地址格式一致（统一使用小写）
   const normalizedAuthor = author.toLowerCase();
@@ -136,18 +136,18 @@ export async function createProposal(
     .single();
 
   if (error) {
-    console.error('Error creating proposal:', error);
+    logger('error', 'Error creating proposal:', error);
     throw error;
   }
 
-  console.log(`Proposal created successfully with ID: ${data.id}`);
+  logger('debug', `Proposal created successfully with ID: ${data.id}`);
 
   // 更新提案统计
   try {
     await updateProposalStats(normalizedAuthor, 'submitted');
-    console.log(`Updated proposal stats for author: ${normalizedAuthor}`);
+    logger('debug', `Updated proposal stats for author: ${normalizedAuthor}`);
   } catch (statsError) {
-    console.error('Error updating proposal stats:', statsError);
+    logger('error', 'Error updating proposal stats:', statsError);
     // 不阻止主流程
   }
 
@@ -167,25 +167,34 @@ export async function updateProposalVotes(id: string, votes: number): Promise<vo
 
 // 投票相关操作
 export async function getVoteByVoter(voter: string): Promise<Vote | null> {
+  logger('debug', `Getting vote for voter: ${voter}`);
+
+  // 规范化地址（统一使用小写）
+  const normalizedVoter = voter.toLowerCase();
+
   const { data, error } = await supabase
     .from('votes')
     .select('*')
-    .eq('voter', voter)
-    .single();
+    .eq('voter', normalizedVoter);
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // No rows returned
-      return null;
-    }
+    logger('error', 'Error getting vote by voter:', error);
     throw error;
   }
 
-  return data as Vote;
+  // 如果没有找到投票，返回null
+  if (!data || data.length === 0) {
+    logger('debug', `No vote found for voter: ${normalizedVoter}`);
+    return null;
+  }
+
+  // 返回第一个投票（一个用户只能有一个有效投票）
+  logger('debug', `Found vote for voter ${normalizedVoter}:`, data[0]);
+  return data[0] as Vote;
 }
 
 export async function createVote(proposalId: string, voter: string): Promise<Vote> {
-  console.log(`Creating new vote: proposalId=${proposalId}, voter=${voter}`);
+  logger('info', `Creating new vote: proposalId=${proposalId}, voter=${voter}`);
 
   // 确保投票者地址格式一致（统一使用小写）
   const normalizedVoter = voter.toLowerCase();
@@ -201,27 +210,27 @@ export async function createVote(proposalId: string, voter: string): Promise<Vot
     .single();
 
   if (error) {
-    console.error('Error creating vote:', error);
+    logger('error', 'Error creating vote:', error);
     throw error;
   }
 
-  console.log(`Vote created successfully with ID: ${data.id}`);
+  logger('debug', `Vote created successfully with ID: ${data.id}`);
 
   // 获取提案
   try {
     const proposal = await getProposalById(proposalId);
     if (proposal) {
-      console.log(`Updating vote count for proposal: ${proposalId}`);
+      logger('debug', `Updating vote count for proposal: ${proposalId}`);
 
       // 更新提案的投票数
       await updateProposalVotes(proposalId, proposal.votes + 1);
 
       // 更新提案作者的统计
       await updateProposalStats(proposal.author, 'voted');
-      console.log(`Updated proposal stats for author: ${proposal.author}`);
+      logger('debug', `Updated proposal stats for author: ${proposal.author}`);
     }
   } catch (statsError) {
-    console.error('Error updating proposal stats after vote:', statsError);
+    logger('error', 'Error updating proposal stats after vote:', statsError);
     // 不阻止主流程
   }
 
@@ -230,7 +239,7 @@ export async function createVote(proposalId: string, voter: string): Promise<Vot
 
 // 清理提案和投票
 export async function clearProposalsAndVotes(): Promise<void> {
-  console.log('Clearing all votes and proposals from database');
+  logger('info', 'Clearing all votes and proposals from database');
 
   try {
     // 先获取当前投票数量
@@ -239,9 +248,9 @@ export async function clearProposalsAndVotes(): Promise<void> {
       .select('id', { count: 'exact' });
 
     if (votesCountError) {
-      console.error('Error counting votes:', votesCountError);
+      logger('error', 'Error counting votes:', votesCountError);
     } else {
-      console.log(`Found ${votesData.length} votes to delete`);
+      logger('debug', `Found ${votesData.length} votes to delete`);
     }
 
     // 先删除投票（由于外键约束）
@@ -251,11 +260,11 @@ export async function clearProposalsAndVotes(): Promise<void> {
       .not('id', 'is', null);
 
     if (votesError) {
-      console.error('Error deleting votes:', votesError);
+      logger('error', 'Error deleting votes:', votesError);
       throw votesError;
     }
 
-    console.log('All votes deleted successfully');
+    logger('debug', 'All votes deleted successfully');
 
     // 获取当前提案数量
     const { data: proposalsData, error: proposalsCountError } = await supabase
@@ -263,9 +272,9 @@ export async function clearProposalsAndVotes(): Promise<void> {
       .select('id', { count: 'exact' });
 
     if (proposalsCountError) {
-      console.error('Error counting proposals:', proposalsCountError);
+      logger('error', 'Error counting proposals:', proposalsCountError);
     } else {
-      console.log(`Found ${proposalsData.length} proposals to delete`);
+      logger('debug', `Found ${proposalsData.length} proposals to delete`);
     }
 
     // 然后删除提案
@@ -275,13 +284,13 @@ export async function clearProposalsAndVotes(): Promise<void> {
       .not('id', 'is', null);
 
     if (proposalsError) {
-      console.error('Error deleting proposals:', proposalsError);
+      logger('error', 'Error deleting proposals:', proposalsError);
       throw proposalsError;
     }
 
-    console.log('All proposals deleted successfully');
+    logger('debug', 'All proposals deleted successfully');
   } catch (error) {
-    console.error('Error in clearProposalsAndVotes:', error);
+    logger('error', 'Error in clearProposalsAndVotes:', error);
     throw error;
   }
 }

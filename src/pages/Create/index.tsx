@@ -4,7 +4,6 @@ import Navbar from '../../components/layout/Navbar';
 import { useLang } from '../../contexts/lang/LangContext';
 import { shortenAddress } from '../../utils/langUtils';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { supabase } from '../../lib/supabaseClient';
 import CountdownTimer from '../../components/CountdownTimer';
 
 const CreatePage: React.FC = () => {
@@ -78,17 +77,23 @@ const CreatePage: React.FC = () => {
   // 获取活跃的投票会话
   const fetchActiveVotingSession = async () => {
     try {
-      // 从后端 API 获取
-      const response = await fetch('http://localhost:3001/api/voting-sessions/current');
+      // 使用环境变量或默认值获取API基础URL
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const url = `${apiBaseUrl}/api/voting-sessions/current`;
+
+      console.log('Fetching active voting session from:', url);
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data && !data.error) {
+        console.log('Active voting session:', data);
         setVotingSession(data);
         setVoteType(data.type);
       } else {
         console.error('获取投票会话失败:', data.error);
+        alert(t('error_fetching_voting_session'));
 
-        // 如果后端 API 失败，创建一个模拟的投票会话
+        // 创建一个临时的投票会话以便UI能够显示
         const expiresAt = new Date();
         expiresAt.setSeconds(expiresAt.getSeconds() + 300); // 5分钟
 
@@ -103,8 +108,9 @@ const CreatePage: React.FC = () => {
       }
     } catch (error) {
       console.error('获取投票会话失败:', error);
+      alert(t('error_fetching_voting_session'));
 
-      // 如果后端 API 失败，创建一个模拟的投票会话
+      // 创建一个临时的投票会话以便UI能够显示
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + 300); // 5分钟
 
@@ -124,10 +130,13 @@ const CreatePage: React.FC = () => {
     try {
       // 从后端 API 获取
       const type = votingSession ? votingSession.type : undefined;
+      // 使用环境变量或默认值获取API基础URL
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
       const url = type
-        ? `http://localhost:3001/api/proposals?type=${type}`
-        : 'http://localhost:3001/api/proposals';
+        ? `${apiBaseUrl}/api/proposals?type=${type}`
+        : `${apiBaseUrl}/api/proposals`;
 
+      console.log('Fetching proposals from API:', url);
       const response = await fetch(url);
       const data = await response.json();
 
@@ -136,59 +145,33 @@ const CreatePage: React.FC = () => {
         setProposals(data);
       } else {
         console.error('获取提案失败:', data.error);
-
-        // 如果后端 API 失败，从 Supabase 获取
-        try {
-          const query = votingSession
-            ? supabase.from('proposals').select('*').eq('type', votingSession.type)
-            : supabase.from('proposals').select('*');
-
-          const { data: supabaseData, error } = await query.order('created_at', { ascending: true });
-
-          if (!error && supabaseData) {
-            console.log('fetchProposals from Supabase:', supabaseData);
-            setProposals(supabaseData);
-          } else {
-            setProposals([]);
-          }
-        } catch (supabaseError) {
-          console.error('从 Supabase 获取提案失败:', supabaseError);
-          setProposals([]);
-        }
+        setProposals([]);
+        alert(t('error_fetching_proposals'));
       }
     } catch (error) {
       console.error('获取提案失败:', error);
-
-      // 如果后端 API 失败，从 Supabase 获取
-      try {
-        const query = votingSession
-          ? supabase.from('proposals').select('*').eq('type', votingSession.type)
-          : supabase.from('proposals').select('*');
-
-        const { data: supabaseData, error } = await query.order('created_at', { ascending: true });
-
-        if (!error && supabaseData) {
-          console.log('fetchProposals from Supabase:', supabaseData);
-          setProposals(supabaseData);
-        } else {
-          setProposals([]);
-        }
-      } catch (supabaseError) {
-        console.error('从 Supabase 获取提案失败:', supabaseError);
-        setProposals([]);
-      }
+      setProposals([]);
+      alert(t('error_fetching_proposals'));
     }
   };
 
   // 获取当前钱包已投的提案id
   const fetchVotedProposal = async (address: string) => {
-    const { data, error } = await supabase
-      .from('votes')
-      .select('proposal_id')
-      .eq('voter', address.toLowerCase());
-    if (!error && data && data.length > 0) {
-      setVotedProposalId(data[0].proposal_id);
-    } else {
+    try {
+      // 使用环境变量或默认值获取API基础URL
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const url = `${apiBaseUrl}/api/proposals/vote/check/${address.toLowerCase()}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data && data.proposal_id) {
+        setVotedProposalId(data.proposal_id);
+      } else {
+        setVotedProposalId(null);
+      }
+    } catch (error) {
+      console.error('获取投票状态失败:', error);
       setVotedProposalId(null);
     }
   };
@@ -251,8 +234,13 @@ const CreatePage: React.FC = () => {
     }
 
     try {
+      // 使用环境变量或默认值获取API基础URL
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const url = `${apiBaseUrl}/api/proposals`;
+
+      console.log('Submitting proposal to:', url);
       // 通过后端 API 提交
-      const response = await fetch('http://localhost:3001/api/proposals', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -314,8 +302,13 @@ const CreatePage: React.FC = () => {
     try {
       setLoading(true);
 
+      // 使用环境变量或默认值获取API基础URL
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const url = `${apiBaseUrl}/api/proposals/vote`;
+
+      console.log('Submitting vote to:', url);
       // 通过后端 API 投票
-      const response = await fetch('http://localhost:3001/api/proposals/vote', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
