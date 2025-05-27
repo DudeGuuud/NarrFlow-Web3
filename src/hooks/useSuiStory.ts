@@ -2,6 +2,7 @@ import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
+import { booksApi } from '../lib/apiClient';
 
 // 环境变量
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID;
@@ -190,27 +191,22 @@ export function useSuiStory() {
     console.log('获取所有书本');
     try {
       // 尝试从后端API获取
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiBaseUrl}/api/books`);
-
-      if (response.ok) {
-        const books = await response.json();
-        console.log('从后端API获取到书本数量:', books.length);
-        return books as BookType[];
-      }
+      const books = await booksApi.getAll();
+      console.log('从后端API获取到书本数量:', books.length);
+      return books as BookType[];
     } catch (error) {
       console.error('从后端API获取书本失败，回退到直接查询区块链:', error);
-    }
 
-    // 如果后端API失败，直接从区块链获取
-    const storyBookObj = await suiClient.getObject({ id: STORYBOOK_ID, options: { showContent: true } });
-    const fields = (storyBookObj.data?.content as any)?.fields;
-    const books = (fields?.books || []).map(unpack);
-    books.forEach((book: Record<string, any>) => {
-      book.paragraphs = unpackParagraphs(book.paragraphs);
-    });
-    console.log('从区块链获取到书本数量:', books.length);
-    return books as BookType[];
+      // 如果后端API失败，直接从区块链获取
+      const storyBookObj = await suiClient.getObject({ id: STORYBOOK_ID, options: { showContent: true } });
+      const fields = (storyBookObj.data?.content as any)?.fields;
+      const books = (fields?.books || []).map(unpack);
+      books.forEach((book: Record<string, any>) => {
+        book.paragraphs = unpackParagraphs(book.paragraphs);
+      });
+      console.log('从区块链获取到书本数量:', books.length);
+      return books as BookType[];
+    }
   }
 
   // 6. 查询某本书下所有段落（已解包）
@@ -232,28 +228,24 @@ export function useSuiStory() {
   }
 
   // 9. 获取当前正在进行中的书
-  async function getCurrentBook() {
+  async function getCurrentBook(): Promise<BookType | null> {
     console.log('获取当前进行中的书本');
     try {
       // 尝试从后端API获取
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiBaseUrl}/api/books/current`);
-
-      if (response.ok) {
-        const book = await response.json();
-        if (book && Object.keys(book).length > 0) {
-          console.log('从后端API获取到当前书本:', book.title);
-          return book;
-        }
+      const book = await booksApi.getCurrent();
+      if (book && Object.keys(book).length > 0) {
+        console.log('从后端API获取到当前书本:', book.title);
+        return book as BookType;
       }
+      return null;
     } catch (error) {
       console.error('从后端API获取当前书本失败，回退到直接查询区块链:', error);
-    }
 
-    // 如果后端API失败，直接从区块链获取
-    const books = await getAllBooks();
-    // 状态为0表示进行中
-    return books.find((b: { status: number }) => b.status === 0);
+      // 如果后端API失败，直接从区块链获取
+      const books = await getAllBooks();
+      // 状态为0表示进行中
+      return books.find((b: { status: number }) => b.status === 0) || null;
+    }
   }
 
   // 10. 添加段落并归档（合并为一个链上交易）

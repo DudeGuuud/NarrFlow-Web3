@@ -1,0 +1,36 @@
+name: Trigger Voting Session Check
+
+on:
+  schedule:
+    # 每5分钟运行一次（GitHub Actions 免费）
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  trigger-voting-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Voting Session Check
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_AUTH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.VERCEL_APP_URL }}/api/v1/trigger/check-voting" \
+            || echo "Failed to trigger voting check, but continuing..."
+
+      - name: Log Result
+        run: echo "Voting session check triggered at $(date)"
+
+  # 可选：每小时清理一次旧会话
+  cleanup-old-sessions:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 * * * *' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Cleanup Old Sessions
+        run: |
+          curl -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_AUTH_TOKEN }}" \
+            "${{ secrets.VERCEL_APP_URL }}/api/v1/cron/cleanup-old-sessions" \
+            || echo "Failed to cleanup old sessions, but continuing..."

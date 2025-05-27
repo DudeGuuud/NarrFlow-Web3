@@ -8,6 +8,7 @@ import { isMobileDevice } from '../../utils/deviceUtils';
 import { useSuiStory } from '../../hooks/useSuiStory';
 import { shortenAddress } from '../../utils/langUtils';
 import { decompressFromBase64 } from 'lz-string';
+import { proposalsApi } from '../../lib/apiClient';
 
 const MAX_BYTES = 2000;
 
@@ -130,24 +131,11 @@ const Home: React.FC = () => {
         await startNewBook(input);
       } else {
         // 如果有当前书籍，向数据库投票池添加段落提案
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiBaseUrl}/api/proposals`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: input,
-            author: window.localStorage.getItem('walletAddress') || 'unknown',
-            type: 'paragraph',
-          }),
+        const result = await proposalsApi.create({
+          content: input,
+          author: window.localStorage.getItem('walletAddress') || 'unknown',
+          type: 'paragraph',
         });
-
-        if (!response.ok) {
-          throw new Error(`提交失败: ${response.status} ${response.statusText}`);
-        }
-
-        const result = await response.json();
         console.log('提案已添加到投票池:', result);
       }
 

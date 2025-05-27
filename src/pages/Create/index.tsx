@@ -5,6 +5,7 @@ import { useLang } from '../../contexts/lang/LangContext';
 import { shortenAddress } from '../../utils/langUtils';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import CountdownTimer from '../../components/CountdownTimer';
+import { votingSessionsApi, proposalsApi, VotingSession, Proposal, Book } from '../../lib/apiClient';
 
 const CreatePage: React.FC = () => {
   const {
@@ -13,26 +14,21 @@ const CreatePage: React.FC = () => {
   const { t } = useLang();
   const account = useCurrentAccount();
 
-  const [book, setBook] = useState<any>(null);
+  const [book, setBook] = useState<Book | null>(null);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [inputBytes, setInputBytes] = useState(0);
   const [showStartNewBook, setShowStartNewBook] = useState(false);
 
   // 提案和投票状态，全部从 Supabase 获取
-  const [proposals, setProposals] = useState<any[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [votedProposalId, setVotedProposalId] = useState<string | null>(null); // 当前钱包已投的提案id
 
   // 当前投票类型：没有书时为'title'，有进行中的书时为'paragraph'
   const [voteType, setVoteType] = useState<'title' | 'paragraph'>('paragraph');
 
   // 投票会话状态
-  const [votingSession, setVotingSession] = useState<{
-    id: string;
-    type: 'title' | 'paragraph';
-    status: 'active' | 'completed' | 'failed';
-    expires_at: string;
-  } | null>(null);
+  const [votingSession, setVotingSession] = useState<VotingSession | null>(null);
 
   // 刷新当前书本信息
   const refresh = async () => {
@@ -77,35 +73,10 @@ const CreatePage: React.FC = () => {
   // 获取活跃的投票会话
   const fetchActiveVotingSession = async () => {
     try {
-      // 使用环境变量或默认值获取API基础URL
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const url = `${apiBaseUrl}/api/voting-sessions/current`;
-
-      console.log('Fetching active voting session from:', url);
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data && !data.error) {
-        console.log('Active voting session:', data);
-        setVotingSession(data);
-        setVoteType(data.type);
-      } else {
-        console.error('获取投票会话失败:', data.error);
-        alert(t('error_fetching_voting_session'));
-
-        // 创建一个临时的投票会话以便UI能够显示
-        const expiresAt = new Date();
-        expiresAt.setSeconds(expiresAt.getSeconds() + 300); // 5分钟
-
-        const mockSession = {
-          id: 'mock-session',
-          type: voteType as 'title' | 'paragraph',
-          status: 'active' as 'active',
-          expires_at: expiresAt.toISOString()
-        };
-
-        setVotingSession(mockSession);
-      }
+      const data = await votingSessionsApi.getCurrent();
+      console.log('Active voting session:', data);
+      setVotingSession(data);
+      setVoteType(data.type);
     } catch (error) {
       console.error('获取投票会话失败:', error);
       alert(t('error_fetching_voting_session'));
@@ -128,26 +99,10 @@ const CreatePage: React.FC = () => {
   // 获取所有提案（按type过滤）
   const fetchProposals = async () => {
     try {
-      // 从后端 API 获取
       const type = votingSession ? votingSession.type : undefined;
-      // 使用环境变量或默认值获取API基础URL
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const url = type
-        ? `${apiBaseUrl}/api/proposals?type=${type}`
-        : `${apiBaseUrl}/api/proposals`;
-
-      console.log('Fetching proposals from API:', url);
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data && !data.error) {
-        console.log('fetchProposals from API:', data);
-        setProposals(data);
-      } else {
-        console.error('获取提案失败:', data.error);
-        setProposals([]);
-        alert(t('error_fetching_proposals'));
-      }
+      const data = await proposalsApi.getAll(type);
+      console.log('fetchProposals from API:', data);
+      setProposals(data);
     } catch (error) {
       console.error('获取提案失败:', error);
       setProposals([]);
@@ -158,13 +113,7 @@ const CreatePage: React.FC = () => {
   // 获取当前钱包已投的提案id
   const fetchVotedProposal = async (address: string) => {
     try {
-      // 使用环境变量或默认值获取API基础URL
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const url = `${apiBaseUrl}/api/proposals/vote/check/${address.toLowerCase()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
+      const data = await proposalsApi.checkVote(address);
       if (data && data.proposal_id) {
         setVotedProposalId(data.proposal_id);
       } else {
@@ -234,33 +183,13 @@ const CreatePage: React.FC = () => {
     }
 
     try {
-      // 使用环境变量或默认值获取API基础URL
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const url = `${apiBaseUrl}/api/proposals`;
-
-      console.log('Submitting proposal to:', url);
-      // 通过后端 API 提交
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content,
-          author: address,
-          type: votingSession.type,
-        }),
+      await proposalsApi.create({
+        content,
+        author: address,
+        type: votingSession.type,
       });
-
-      const data = await response.json();
-
-      if (data && !data.error) {
-        setContent('');
-        fetchProposals();
-      } else {
-        console.error('Error adding proposal:', data.error);
-        alert(t('error_adding_proposal'));
-      }
+      setContent('');
+      fetchProposals();
     } catch (error) {
       console.error('Error adding proposal:', error);
       alert(t('error_adding_proposal'));
@@ -302,33 +231,15 @@ const CreatePage: React.FC = () => {
     try {
       setLoading(true);
 
-      // 使用环境变量或默认值获取API基础URL
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const url = `${apiBaseUrl}/api/proposals/vote`;
-
-      console.log('Submitting vote to:', url);
       // 通过后端 API 投票
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          proposal_id: proposalId,
-          voter: address,
-        }),
+      await proposalsApi.vote({
+        proposal_id: proposalId,
+        voter: address,
       });
 
-      const data = await response.json();
-
-      if (data && !data.error) {
-        // 更新本地状态
-        fetchProposals();
-        setVotedProposalId(proposalId);
-      } else {
-        console.error('Error voting:', data.error);
-        alert(t('error_voting'));
-      }
+      // 更新本地状态
+      fetchProposals();
+      setVotedProposalId(proposalId);
     } catch (error) {
       console.error('Error voting:', error);
       alert(t('error_voting'));
